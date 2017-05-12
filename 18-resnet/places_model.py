@@ -135,7 +135,8 @@ class placesModel(object):
             h2 = tf.nn.relu(bn2)
 
             z3 = tf.nn.conv2d(h2, W3conv,[1,1,1,1],'SAME') + b3conv
-            bn3 = tf.layers.batch_normalization(z3)
+            res1 = p1 + z3
+            bn3 = tf.layers.batch_normalization(res1)
             h3= tf.nn.relu(bn3)
 
             z4 = tf.nn.conv2d(h3, W4conv,[1,1,1,1],'SAME') + b4conv
@@ -143,7 +144,8 @@ class placesModel(object):
             h4= tf.nn.relu(bn4)
 
             z5 = tf.nn.conv2d(h4, W5conv,[1,1,1,1],'SAME') + b5conv
-            bn5 = tf.layers.batch_normalization(z5)
+            res2 = h3 + z5
+            bn5 = tf.layers.batch_normalization(res2)
             h5= tf.nn.relu(bn5)
 
             z6 = tf.nn.conv2d(h5, W6conv,[1,1,1,1],'SAME') + b6conv
@@ -151,6 +153,7 @@ class placesModel(object):
             h6= tf.nn.relu(bn6)
 
             z7 = tf.nn.conv2d(h6, W7conv,[1,1,1,1],'SAME') + b7conv
+            # res3 = h5 + z7
             bn7 = tf.layers.batch_normalization(z7)
             h7= tf.nn.relu(bn7)
 
@@ -159,7 +162,8 @@ class placesModel(object):
             h8= tf.nn.relu(bn8)
 
             z9 = tf.nn.conv2d(h8, W9conv,[1,1,1,1],'SAME') + b9conv
-            bn9 = tf.layers.batch_normalization(z9)
+            res4 = h8 + z9
+            bn9 = tf.layers.batch_normalization(res4)
             h9= tf.nn.relu(bn9)
 
             z10 = tf.nn.conv2d(h9, W10conv,[1,1,1,1],'SAME') + b10conv
@@ -167,6 +171,7 @@ class placesModel(object):
             h10= tf.nn.relu(bn10)
 
             z11 = tf.nn.conv2d(h10, W11conv,[1,1,1,1],'SAME') + b11conv
+            # res5 = h10 + z11
             bn11 = tf.layers.batch_normalization(z11)
             h11= tf.nn.relu(bn11)
 
@@ -175,7 +180,8 @@ class placesModel(object):
             h12= tf.nn.relu(bn12)
 
             z13 = tf.nn.conv2d(h12, W13conv,[1,1,1,1],'SAME') + b13conv
-            bn13 = tf.layers.batch_normalization(z13)
+            res6 = h12 + z13
+            bn13 = tf.layers.batch_normalization(res6)
             h13= tf.nn.relu(bn13)
 
             z14 = tf.nn.conv2d(h13, W14conv,[1,1,1,1],'SAME') + b14conv
@@ -183,6 +189,7 @@ class placesModel(object):
             h14= tf.nn.relu(bn14)
 
             z15 = tf.nn.conv2d(h14, W15conv,[1,1,1,1],'SAME') + b15conv
+            # res7 = h14 + z15
             bn15 = tf.layers.batch_normalization(z15)
             h15= tf.nn.relu(bn15)
 
@@ -191,7 +198,8 @@ class placesModel(object):
             h16= tf.nn.relu(bn16)
 
             z17 = tf.nn.conv2d(h16, W17conv,[1,1,1,1],'SAME') + b17conv
-            bn17 = tf.layers.batch_normalization(z17)
+            res8 = h16 + z17
+            bn17 = tf.layers.batch_normalization(res8)
             h17= tf.nn.relu(bn17)
 
             p2 = tf.nn.pool(h17,window_shape=(3,3),pooling_type='AVG',padding='VALID')
