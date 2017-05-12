@@ -9,6 +9,7 @@ import numpy as np
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
 from tensorflow.python.ops import variable_scope as vs
+import tensorflow.contrib.layers as layers
 
 from util import Progbar, minibatches
 
@@ -48,11 +49,11 @@ class placesModel(object):
         # ==== set up placeholder tokens ========
 
         self.input_placeholder = tf.placeholder(tf.float32, shape=(None,self.height,self.width,self.channels), name='input_placeholder')
-        self.label_placeholder = tf.placeholder(tf.int2, shape=(None,), name='label_placeholder')
+        self.label_placeholder = tf.placeholder(tf.int32, shape=(None,), name='label_placeholder')
 
         # ==== assemble pieces ====
         with tf.variable_scope("places_model", initializer=tf.uniform_unit_scaling_initializer(1.0)):
-            self.setup_operations()
+            self.setup_graph()
             self.setup_loss()
 
         # ==== set up training/updating procedure ====
@@ -82,7 +83,7 @@ class placesModel(object):
         self.saver=tf.train.Saver()
 
 
-    def setup_operations(self):
+    def setup_graph(self):
         with tf.variable_scope("simple_feed_forward",reuse=False):
             W1conv = tf.get_variable('W1conv',shape=[3,3,self.channels,32],initializer=layers.xavier_initializer())
             b1conv = tf.get_variable('b1conv',shape=[32],initializer=tf.zeros_initializer())
@@ -100,15 +101,14 @@ class placesModel(object):
 
             flat = layers.flatten(h3)
 
-            W1 = tf.get_variable('W1',shape=[flat.get_shape()[-1],512],initializer=layers.xavier_initializer())
-            b1 = tf.get_variable('b1',shape=[512],initializer=tf.zeros_initializer())
-            W2 = tf.get_variable('W2',shape=[512,self.flags.output_size],initializer=layers.xavier_initializer())
+            W1 = tf.get_variable('W1',shape=[flat.get_shape()[-1],self.h_size],initializer=layers.xavier_initializer())
+            b1 = tf.get_variable('b1',shape=[self.h_size],initializer=tf.zeros_initializer())
+            W2 = tf.get_variable('W2',shape=[self.h_size,self.flags.output_size],initializer=layers.xavier_initializer())
             b2 = tf.get_variable('b2',shape=[self.flags.output_size],initializer=tf.zeros_initializer())
 
             z4 = tf.matmul(flat,W1) + b1
             h4 = tf.nn.relu(z4)
             self.label_predictions = tf.matmul(h4,W2) + b2
-
 
 
     def setup_loss(self):
@@ -117,7 +117,7 @@ class placesModel(object):
         :return:
         """
         with vs.variable_scope("loss"):
-            self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(self.label_predictions, self.label_placeholder))  
+            self.loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.label_placeholder, logits=self.label_predictions))
 
 
     def optimize(self, session, image_batch, label_batch):
@@ -146,7 +146,7 @@ class placesModel(object):
         output_feed = [self.label_predictions]
         outputs = session.run(output_feed, input_feed)
 
-        return outputs
+        return outputs[0]
 
 
     def answer(self, session, data):
@@ -155,11 +155,11 @@ class placesModel(object):
         prog_train = Progbar(target=1 + int(len(data[0]) / self.flags.batch_size))
         for i, batch in enumerate(self.minibatches(data, self.flags.batch_size, shuffle=False)):
             score = self.forward_pass(session, *batch)  
-            scores.append(label)
+            scores.append(score)
             prog_train.update(i + 1, [("Predicting Images....",0.0)])
         print("")
-        predictions = np.argmax(scores, axis=1)
 
+        predictions = np.argmax(scores, axis=-1)
         return predictions
 
     def validate(self, session, image_batch, label_batch):
@@ -204,8 +204,7 @@ class placesModel(object):
             sample = len(dataset[0])
         else:
             #np.random.seed(0)
-            inds = np.random.choice(len(dataset[0]), sample)
-            
+            inds = np.random.choice(len(dataset[0]), sample, replace=False)
             sampled = [elem[inds] for elem in dataset]
             
         predictions = self.answer(session, sampled)
@@ -288,10 +287,17 @@ class placesModel(object):
         
         num_epochs = self.flags.epochs
 
+        # print train_dataset[0].shape,train_dataset[1].shape
+        # print val_dataset[0].shape,val_dataset[1].shape
+
         if self.flags.debug:
             train_dataset = [elem[:self.flags.batch_size*1] for elem in train_dataset]
             val_dataset = [elem[:self.flags.batch_size] for elem in val_dataset]
             num_epochs = 10
+
+        # print train_dataset[0].shape,train_dataset[1].shape
+        # print val_dataset[0].shape,val_dataset[1].shape
+        # assert False
 
         for epoch in range(num_epochs):
             logging.info("Epoch %d out of %d", epoch + 1, self.flags.epochs)
