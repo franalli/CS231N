@@ -7,7 +7,7 @@ import json
 
 import tensorflow as tf
 
-#from places_model import placesModel
+from places_model import placesModel
 from os.path import join as pjoin
 import numpy as np
 from scipy import misc
@@ -19,16 +19,14 @@ logging.basicConfig(level=logging.INFO)
 
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "Learning rate.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 10.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_float("dropout", 0.3, "Fraction of units randomly dropped on non-recurrent connections.")
-tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
+tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
+tf.app.flags.DEFINE_integer("input_width", 256, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("input_height", 256, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("epochs", 10, "Number of epochs to train.")
-tf.app.flags.DEFINE_integer("state_size", 200, "Size of each model layer.")
-tf.app.flags.DEFINE_integer("output_size", nclasses, "The output size of your model.")
-tf.app.flags.DEFINE_string("data_dir", "data/squad", "SQuAD directory (default ./data/squad)")
-tf.app.flags.DEFINE_integer("output_size", 350, "The output size of your model.")
-tf.app.flags.DEFINE_string("data_dir", "data/places2", "SQuAD directory (default ./data/squad)")
+tf.app.flags.DEFINE_integer("state_size", 500, "Size of each model hidden layer.")
+tf.app.flags.DEFINE_integer("output_size", 365, "The output size of your model.")
+tf.app.flags.DEFINE_string("data_dir", "data/train_data", "Places directory")
 tf.app.flags.DEFINE_string("train_dir", "train", "Training directory to save the model parameters (default: ./train).")
 tf.app.flags.DEFINE_string("load_train_dir", "", "Training directory to load model parameters from to resume training (default: {train_dir}).")
 tf.app.flags.DEFINE_string("log_dir", "log", "Path to store log and flag files (default: ./log)")
@@ -64,11 +62,10 @@ def initialize_data(file_name):
         X.append(img)
         y.append(int(img_class))
     return np.array(X),np.array(y)
+
 def main(_):
 
     # Do what you need to load datasets from FLAGS.data_dir
-    train_dataset = initialize_data(train_data_path, keep_as_string=False)
-    val_dataset = initialize_data(val_data_path, keep_as_string=False)
     if FLAGS.debug:
         print "Doing debug"
         try:
@@ -111,7 +108,9 @@ def main(_):
     print "X_val",X_val.shape
     print "y_val",y_val.shape
     exit()
-    data = (X_train,y_train,X_val,y_val)
+
+    train_dataset = [X_train,y_train]
+    val_dataset = [X_val,y_val]
 
     model = placesModel(flags=FLAGS)
 
@@ -131,8 +130,8 @@ def main(_):
         save_train_dir = get_normalized_train_dir(FLAGS.train_dir)
         saver = tf.train.Saver()
 
-        qa.train(session=sess,
-                 dataset=train_dataset,
+        model.train(session=sess,
+                 train_dataset=train_dataset,
                  val_dataset=val_dataset,
                  train_dir=save_train_dir)
 
