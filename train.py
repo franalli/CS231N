@@ -18,11 +18,11 @@ from IPython import embed
 logging.basicConfig(level=logging.INFO)
 
 tf.app.flags.DEFINE_float("learning_rate", 0.001, "Learning rate.")
-tf.app.flags.DEFINE_float("max_gradient_norm", 10.0, "Clip gradients to this norm.")
+tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("batch_size", 20, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("epochs", 10, "Number of epochs to train.")
 tf.app.flags.DEFINE_integer("state_size", 500, "Size of each model hidden layer.")
 tf.app.flags.DEFINE_integer("output_size", 365, "The output size of your model.")
@@ -36,7 +36,7 @@ tf.app.flags.DEFINE_string("optimizer", "adam", "adam / sgd")
 tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per print.")
 tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicates keep all.")
 tf.app.flags.DEFINE_integer("debug",1,"Whether or not to use debug dataset of 10 images per class from val")
-tf.app.flags.DEFINE_string("run_name", "simple_convolution", "Name to save the .ckpt file")
+tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
 
 
 FLAGS = tf.app.flags.FLAGS
@@ -71,8 +71,9 @@ def initialize_model(session, model, train_dir):
 
 
 def initialize_data(file_name):
-    print "LOADING", file_name
-    f=open(FLAGS.data_dir+"/"+file_name+"/places365_train"+".txt")
+    print "LOADING", file_name, "data"
+    # f=open(FLAGS.data_dir+"/"+file_name+"/places365_train"+".txt")
+    f=open(FLAGS.data_dir+"/"+file_name+"/"+file_name+"_labels.txt")
     X=[]
     y=[]
     for line in f:
@@ -94,7 +95,7 @@ def main(_):
             print "Loaded from .npz file"
         except:
             print "Creating .npz file"
-            X,y=initialize_data("train_data")
+            X,y=initialize_data("val")
             num_classes=np.max(y)+1
             X_train=[]
             X_train=np.zeros((num_classes*10,FLAGS.input_height,FLAGS.input_width,3))
@@ -119,8 +120,8 @@ def main(_):
             print "Loaded from .npz file"
         except:
             print "Creating .npz file"
-            X_train,y_train=initialize_data("train_data")
-            X_val,y_val=initialize_data("val_data")
+            X_train,y_train=initialize_data("train")
+            X_val,y_val=initialize_data("val")
             np.savez(FLAGS.data_dir+"/full"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width),X_train=X_train,y_train=y_train,X_val=X_val,y_val=y_val)
 
     print "X_train",X_train.shape

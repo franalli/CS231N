@@ -153,8 +153,9 @@ class placesModel(object):
             h6= tf.nn.relu(bn6)
 
             z7 = tf.nn.conv2d(h6, W7conv,[1,1,1,1],'SAME') + b7conv
-            # res3 = h5 + z7
-            bn7 = tf.layers.batch_normalization(z7)
+            h5_padded = tf.pad(h5, paddings=([0,0],[0,0], [0, 0],[32,32]), mode='CONSTANT')
+            res3 = h5_padded + z7
+            bn7 = tf.layers.batch_normalization(res3)
             h7= tf.nn.relu(bn7)
 
             z8 = tf.nn.conv2d(h7, W8conv,[1,1,1,1],'SAME') + b8conv
@@ -171,8 +172,8 @@ class placesModel(object):
             h10= tf.nn.relu(bn10)
 
             z11 = tf.nn.conv2d(h10, W11conv,[1,1,1,1],'SAME') + b11conv
-            # res5 = h10 + z11
-            bn11 = tf.layers.batch_normalization(z11)
+            res5 = h10 + z11
+            bn11 = tf.layers.batch_normalization(res5)
             h11= tf.nn.relu(bn11)
 
             z12 = tf.nn.conv2d(h11, W12conv,[1,1,1,1],'SAME') + b12conv
@@ -189,8 +190,8 @@ class placesModel(object):
             h14= tf.nn.relu(bn14)
 
             z15 = tf.nn.conv2d(h14, W15conv,[1,1,1,1],'SAME') + b15conv
-            # res7 = h14 + z15
-            bn15 = tf.layers.batch_normalization(z15)
+            res7 = h14 + z15
+            bn15 = tf.layers.batch_normalization(res7)
             h15= tf.nn.relu(bn15)
 
             z16 = tf.nn.conv2d(h15, W16conv,[1,1,1,1],'SAME') + b16conv
@@ -397,7 +398,7 @@ class placesModel(object):
         if self.flags.debug:
             train_dataset = [elem[:self.flags.batch_size*1] for elem in train_dataset]
             val_dataset = [elem[:self.flags.batch_size] for elem in val_dataset]
-            num_epochs = 10
+            num_epochs = 100
 
         # print train_dataset[0].shape,train_dataset[1].shape
         # print val_dataset[0].shape,val_dataset[1].shape
