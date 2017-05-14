@@ -44,7 +44,8 @@ class placesModel(object):
         self.height = self.flags.input_height
         self.width = self.flags.input_width
         self.channels = 3
-
+        self.layer_params=self.flags.layer_params
+        self.res_stride=self.flags.res_stride
 
         # ==== set up placeholder tokens ========
 
@@ -61,10 +62,6 @@ class placesModel(object):
         self.starter_learning_rate = self.flags.learning_rate
 
         self.learning_rate = self.starter_learning_rate
-
-        # learning rate decay
-        # self.learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,
-        #                                    1000, 0.96, staircase=True)
 
         self.optimizer = get_optimizer("adam")
         
@@ -85,136 +82,58 @@ class placesModel(object):
 
     def setup_graph(self):
         with tf.variable_scope("simple_feed_forward",reuse=False):
-            W1conv = tf.get_variable('W1conv',shape=[7,7,self.channels,64],initializer=layers.xavier_initializer())
-            b1conv = tf.get_variable('b1conv',shape=[64],initializer=tf.zeros_initializer())
+            cur_in=self.input_placeholder
+            prev_depth=self.channels
+            prev_res=None
+            prev_res_depth=None
+            res_counter=0
+            counter=0
+            for params in self.layer_params:
+                #params is a tuple of (type, number,shape,stride,depth,use_batch_norm,
+                for i in range(params[1]):
+                    counter+=1
+                    if params[0]=='fc':
+                        flat=layers.flatten(cur_in)
+                        W_shape=[flat.get_shape()[-1],params[2]]
+                        b_shape=[params[2]]
+                        W=tf.get_variable('FC_W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
+                        b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
+                        cur_in=tf.matmul(flat,W)+b
+                    if params[0]=='batchnorm':
+                        cur_in=tf.layers.batch_normalization(cur_in)
+                    if params[0]=='relu':
+                        cur_in=tf.nn.relu(cur_in)
+                    if params[0]=='maxpool':
+                        cur_in=tf.layers.max_pooling2d(cur_in,pool_size=params[2],strides=params[3])
+                    if params[0]=='avgpool':
+                        cur_in=tf.nn.pool(cur_in,window_shape=params[2],pooling_type='AVG',padding='SAME')
+                    if params[0]=='conv':
+                        W_shape=[params[2][0],params[2][1],prev_depth,params[4]]
+                        b_shape=[params[4]]
+                        prev_depth=params[4]
+                        W=tf.get_variable('W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
+                        b = tf.get_variable('b'+str(counter)+'conv',shape=b_shape,initializer=tf.constant_initializer(0.0))
+                        
+                        z = tf.nn.conv2d(cur_in,W,params[3],'SAME') +b
+                        if res_counter%self.res_stride==0:                            
+                            if prev_res!=None:
+                                if prev_res_depth!=prev_depth:
+                                    assert prev_res_depth<prev_depth, "CANNOT go down in depth of convolutions"
+                                    #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
+                                    prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
+                                z=prev_res+z
+                                
+                        res_counter+=1
+                        if params[5]:
+                            bn = tf.layers.batch_normalization(z)
+                        h=tf.nn.relu(bn)
+                        if counter%self.res_stride==0:                            
+                            prev_res=z
+                            prev_res_depth=prev_depth
+                        cur_in=h
 
-            W2conv = tf.get_variable('W2conv',shape=[3,3,64,64],initializer=layers.xavier_initializer())
-            b2conv = tf.get_variable('b2conv',shape=[64],initializer=tf.zeros_initializer())
-            W3conv = tf.get_variable('W3conv',shape=[3,3,64,64],initializer=layers.xavier_initializer())
-            b3conv = tf.get_variable('b3conv',shape=[64],initializer=tf.zeros_initializer())
-            W4conv = tf.get_variable('W4conv',shape=[3,3,64,64],initializer=layers.xavier_initializer())
-            b4conv = tf.get_variable('b4conv',shape=[64],initializer=tf.zeros_initializer())
-            W5conv = tf.get_variable('W5conv',shape=[3,3,64,64],initializer=layers.xavier_initializer())
-            b5conv = tf.get_variable('b5conv',shape=[64],initializer=tf.zeros_initializer())
-
-            W6conv = tf.get_variable('W6conv',shape=[3,3,64,128],initializer=layers.xavier_initializer())
-            b6conv = tf.get_variable('b6conv',shape=[128],initializer=tf.zeros_initializer())
-            W7conv = tf.get_variable('W7conv',shape=[3,3,128,128],initializer=layers.xavier_initializer())
-            b7conv = tf.get_variable('b7conv',shape=[128],initializer=tf.zeros_initializer())
-            W8conv = tf.get_variable('W8conv',shape=[3,3,128,128],initializer=layers.xavier_initializer())
-            b8conv = tf.get_variable('b8conv',shape=[128],initializer=tf.zeros_initializer())
-            W9conv = tf.get_variable('W9conv',shape=[3,3,128,128],initializer=layers.xavier_initializer())
-            b9conv = tf.get_variable('b9conv',shape=[128],initializer=tf.zeros_initializer())
-
-            W10conv = tf.get_variable('W10conv',shape=[3,3,128,256],initializer=layers.xavier_initializer())
-            b10conv = tf.get_variable('b10conv',shape=[256],initializer=tf.zeros_initializer())
-            W11conv = tf.get_variable('W11conv',shape=[3,3,256,256],initializer=layers.xavier_initializer())
-            b11conv = tf.get_variable('b11conv',shape=[256],initializer=tf.zeros_initializer())
-            W12conv = tf.get_variable('W12conv',shape=[3,3,256,256],initializer=layers.xavier_initializer())
-            b12conv = tf.get_variable('b12conv',shape=[256],initializer=tf.zeros_initializer())
-            W13conv = tf.get_variable('W13conv',shape=[3,3,256,256],initializer=layers.xavier_initializer())
-            b13conv = tf.get_variable('b13conv',shape=[256],initializer=tf.zeros_initializer())
-
-            W14conv = tf.get_variable('W14conv',shape=[3,3,256,512],initializer=layers.xavier_initializer())
-            b14conv = tf.get_variable('b14conv',shape=[512],initializer=tf.zeros_initializer())
-            W15conv = tf.get_variable('W15conv',shape=[3,3,512,512],initializer=layers.xavier_initializer())
-            b15conv = tf.get_variable('b15conv',shape=[512],initializer=tf.zeros_initializer())
-            W16conv = tf.get_variable('W16conv',shape=[3,3,512,512],initializer=layers.xavier_initializer())
-            b16conv = tf.get_variable('b16conv',shape=[512],initializer=tf.zeros_initializer())
-            W17conv = tf.get_variable('W17conv',shape=[3,3,512,512],initializer=layers.xavier_initializer())
-            b17conv = tf.get_variable('b17conv',shape=[512],initializer=tf.zeros_initializer())
-
-            bn = tf.layers.batch_normalization(self.input_placeholder)
-            z1 = tf.nn.conv2d(bn, W1conv,[1,2,2,1],'SAME') + b1conv
-            bn1 = tf.layers.batch_normalization(z1)
-            h1 = tf.nn.relu(bn1)
-            p1 = tf.layers.max_pooling2d(h1,pool_size =(3,3),strides=2)
-
-            z2 = tf.nn.conv2d(p1, W2conv,[1,1,1,1],'SAME') + b2conv
-            bn2 = tf.layers.batch_normalization(z2)
-            h2 = tf.nn.relu(bn2)
-
-            z3 = tf.nn.conv2d(h2, W3conv,[1,1,1,1],'SAME') + b3conv
-            res1 = p1 + z3
-            bn3 = tf.layers.batch_normalization(res1)
-            h3= tf.nn.relu(bn3)
-
-            z4 = tf.nn.conv2d(h3, W4conv,[1,1,1,1],'SAME') + b4conv
-            bn4 = tf.layers.batch_normalization(z4)
-            h4= tf.nn.relu(bn4)
-
-            z5 = tf.nn.conv2d(h4, W5conv,[1,1,1,1],'SAME') + b5conv
-            res2 = h3 + z5
-            bn5 = tf.layers.batch_normalization(res2)
-            h5= tf.nn.relu(bn5)
-
-            z6 = tf.nn.conv2d(h5, W6conv,[1,1,1,1],'SAME') + b6conv
-            bn6 = tf.layers.batch_normalization(z6)
-            h6= tf.nn.relu(bn6)
-
-            z7 = tf.nn.conv2d(h6, W7conv,[1,1,1,1],'SAME') + b7conv
-            h5_padded = tf.pad(h5, paddings=([0,0],[0,0], [0, 0],[32,32]), mode='CONSTANT')
-            res3 = h5_padded + z7
-            bn7 = tf.layers.batch_normalization(res3)
-            h7= tf.nn.relu(bn7)
-
-            z8 = tf.nn.conv2d(h7, W8conv,[1,1,1,1],'SAME') + b8conv
-            bn8 = tf.layers.batch_normalization(z8)
-            h8= tf.nn.relu(bn8)
-
-            z9 = tf.nn.conv2d(h8, W9conv,[1,1,1,1],'SAME') + b9conv
-            res4 = h8 + z9
-            bn9 = tf.layers.batch_normalization(res4)
-            h9= tf.nn.relu(bn9)
-
-            z10 = tf.nn.conv2d(h9, W10conv,[1,1,1,1],'SAME') + b10conv
-            bn10 = tf.layers.batch_normalization(z10)
-            h10= tf.nn.relu(bn10)
-
-            z11 = tf.nn.conv2d(h10, W11conv,[1,1,1,1],'SAME') + b11conv
-            res5 = h10 + z11
-            bn11 = tf.layers.batch_normalization(res5)
-            h11= tf.nn.relu(bn11)
-
-            z12 = tf.nn.conv2d(h11, W12conv,[1,1,1,1],'SAME') + b12conv
-            bn12 = tf.layers.batch_normalization(z12)
-            h12= tf.nn.relu(bn12)
-
-            z13 = tf.nn.conv2d(h12, W13conv,[1,1,1,1],'SAME') + b13conv
-            res6 = h12 + z13
-            bn13 = tf.layers.batch_normalization(res6)
-            h13= tf.nn.relu(bn13)
-
-            z14 = tf.nn.conv2d(h13, W14conv,[1,1,1,1],'SAME') + b14conv
-            bn14 = tf.layers.batch_normalization(z14)
-            h14= tf.nn.relu(bn14)
-
-            z15 = tf.nn.conv2d(h14, W15conv,[1,1,1,1],'SAME') + b15conv
-            res7 = h14 + z15
-            bn15 = tf.layers.batch_normalization(res7)
-            h15= tf.nn.relu(bn15)
-
-            z16 = tf.nn.conv2d(h15, W16conv,[1,1,1,1],'SAME') + b16conv
-            bn16 = tf.layers.batch_normalization(z16)
-            h16= tf.nn.relu(bn16)
-
-            z17 = tf.nn.conv2d(h16, W17conv,[1,1,1,1],'SAME') + b17conv
-            res8 = h16 + z17
-            bn17 = tf.layers.batch_normalization(res8)
-            h17= tf.nn.relu(bn17)
-
-            p2 = tf.nn.pool(h17,window_shape=(3,3),pooling_type='AVG',padding='VALID')
-            flat = layers.flatten(p2)
-
-            W1 = tf.get_variable('W1',shape=[flat.get_shape()[-1],self.h_size],initializer=layers.xavier_initializer())
-            b1 = tf.get_variable('b1',shape=[self.h_size],initializer=tf.zeros_initializer())
-            W2 = tf.get_variable('W2',shape=[self.h_size,self.flags.output_size],initializer=layers.xavier_initializer())
-            b2 = tf.get_variable('b2',shape=[self.flags.output_size],initializer=tf.zeros_initializer())
-
-            z4 = tf.matmul(flat,W1) + b1
-            h4 = tf.nn.relu(z4)
-            self.label_predictions = tf.matmul(h4,W2) + b2
-
+            self.label_predictions=cur_in            
+            
 
     def setup_loss(self):
         """

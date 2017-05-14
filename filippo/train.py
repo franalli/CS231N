@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 from __future__ import division
-#from __future__ import print_function
 
 import os
 import json
 
 import tensorflow as tf
 
-from places_model import placesModel
+from resnet import placesModel
 from os.path import join as pjoin
 import numpy as np
 from scipy import misc
@@ -17,7 +16,7 @@ from IPython import embed
 
 logging.basicConfig(level=logging.INFO)
 
-tf.app.flags.DEFINE_float("learning_rate", 0.001, "Learning rate.")
+tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
@@ -26,7 +25,7 @@ tf.app.flags.DEFINE_integer("batch_size", 20, "Batch size to use during training
 tf.app.flags.DEFINE_integer("epochs", 10, "Number of epochs to train.")
 tf.app.flags.DEFINE_integer("state_size", 500, "Size of each model hidden layer.")
 tf.app.flags.DEFINE_integer("output_size", 365, "The output size of your model.")
-tf.app.flags.DEFINE_string("data_dir", "data", "Places directory")
+tf.app.flags.DEFINE_string("data_dir", "data/places2", "Places directory")
 tf.app.flags.DEFINE_string("train_dir", "train", "Training directory to save the model parameters (default: ./train).")
 tf.app.flags.DEFINE_string("load_train_dir", "", "Training directory to load model parameters from to resume training (default: {train_dir}).")
 tf.app.flags.DEFINE_string("log_dir", "log", "Path to store log and flag files (default: ./log)")
@@ -37,6 +36,22 @@ tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per pri
 tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicates keep all.")
 tf.app.flags.DEFINE_integer("debug",1,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
+tf.app.flags.DEFINE_string("res_stride", 2, "How many conv layers to take before adding in res and resaving")
+layer_params=[("batchnorm",1,None,None,None),
+              ("conv",1,(7,7),(1,2,2,1),64,  True),
+              ("maxpool",1,(3,3), 2,None,None),
+              ("conv",1,(3,3),(1,2,2,1),64, True),
+              ("conv",3,(3,3),(1,1,1,1),64, True),
+              ("conv",1,(3,3),(1,2,2,1),128, True),
+              ("conv",3,(3,3),(1,1,1,1),128, True),
+              ("conv",1,(3,3),(1,2,2,1),256, True),
+              ("conv",3,(3,3),(1,1,1,1),256, True),
+              ("conv",1,(3,3),(1,2,2,1),512, True),
+              ("conv",3,(3,3),(1,1,1,1),512, True),
+              ("avgpool",1,(3,3),None, None,None),
+              ("fc",  1,500,  None,     None,None),
+              ("fc",  1,365,  None,     None,None)]
+tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm)")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -72,13 +87,13 @@ def initialize_model(session, model, train_dir):
 def initialize_data(file_name):
     print "LOADING", file_name, "data"
     # f=open(FLAGS.data_dir+"/"+file_name+"/places365_train"+".txt")
-    f=open(FLAGS.data_dir+"/"+file_name+"/"+file_name+"_labels.txt")
+    f=open(FLAGS.data_dir+"/places365_"+file_name+".txt")
     X=[]
     y=[]
     for line in f:
         img_name,img_class=line.strip().split(" ")
         # img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode="RGB"),(FLAGS.input_height,FLAGS.input_width))
-        img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"/"+img_name,mode="RGB"),(FLAGS.input_height,FLAGS.input_width))
+        img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode="RGB"),(FLAGS.input_height,FLAGS.input_width))
         X.append(img)
         y.append(int(img_class))
     return np.array(X),np.array(y)
