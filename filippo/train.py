@@ -21,9 +21,9 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("batch_size", 20, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("epochs", 10, "Number of epochs to train.")
-tf.app.flags.DEFINE_integer("state_size", 500, "Size of each model hidden layer.")
+tf.app.flags.DEFINE_integer("state_size", 1000, "Size of each model hidden layer.")
 tf.app.flags.DEFINE_integer("output_size", 365, "The output size of your model.")
 tf.app.flags.DEFINE_string("data_dir", "data/places2", "Places directory")
 tf.app.flags.DEFINE_string("train_dir", "train", "Training directory to save the model parameters (default: ./train).")
@@ -98,6 +98,13 @@ def initialize_data(file_name):
         y.append(int(img_class))
     return np.array(X),np.array(y)
 
+def preprocess_data(X_train,X_val):
+    mean_image = np.mean(X_train, axis = 0)
+    X_train -= mean_image
+    X_val -= mean_image
+    return X_train,X_val
+
+
 def main(_):
 
     # Do what you need to load datasets from FLAGS.data_dir
@@ -143,6 +150,7 @@ def main(_):
     print "X_val",X_val.shape
     print "y_val",y_val.shape
 
+    X_train,X_val = preprocess_data(X_train,X_val)
     train_dataset = [X_train,y_train]
     val_dataset = [X_val,y_val]
 
