@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import division
-#from __future__ import print_function
 
 import os
 import json
@@ -17,7 +16,7 @@ from IPython import embed
 
 logging.basicConfig(level=logging.INFO)
 
-tf.app.flags.DEFINE_float("learning_rate", 0.001, "Learning rate.")
+tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
@@ -38,15 +37,21 @@ tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicate
 tf.app.flags.DEFINE_integer("debug",1,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
 tf.app.flags.DEFINE_string("res_stride", 2, "How many conv layers to take before adding in res and resaving")
-layer_params=[("conv",1,(7,7),(1,2,2,1),64,  True),
-              ("pool",1,(3,3), 2,       None,None),
-              ("conv",4,(3,3),(1,1,1,1),64, True),
-              ("conv",4,(3,3),(1,1,1,1),128, True),
-              ("conv",4,(3,3),(1,1,1,1),256, True),
-              ("conv",4,(3,3),(1,1,1,1),512, True),
+layer_params=[("batchnorm",1,None,None,None),
+              ("conv",1,(7,7),(1,2,2,1),64,  True),
+              ("maxpool",1,(3,3), 2,None,None),
+              ("conv",1,(3,3),(1,2,2,1),64, True),
+              ("conv",3,(3,3),(1,1,1,1),64, True),
+              ("conv",1,(3,3),(1,2,2,1),128, True),
+              ("conv",3,(3,3),(1,1,1,1),128, True),
+              ("conv",1,(3,3),(1,2,2,1),256, True),
+              ("conv",3,(3,3),(1,1,1,1),256, True),
+              ("conv",1,(3,3),(1,2,2,1),512, True),
+              ("conv",3,(3,3),(1,1,1,1),512, True),
+              ("avgpool",1,(3,3),None, None,None),
               ("fc",  1,500,  None,     None,None),
               ("fc",  1,365,  None,     None,None)]
-tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm")
+tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm)")
 
 FLAGS = tf.app.flags.FLAGS
 

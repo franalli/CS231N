@@ -99,18 +99,21 @@ class placesModel(object):
                         W=tf.get_variable('FC_W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
                         b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
                         cur_in=tf.matmul(flat,W)+b
+                    if params[0]=='batchnorm':
+                        cur_in=tf.layers.batch_normalization(cur_in)
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
-                    if params[0]=='pool':
-                        cur_in=tf.layers.max_pooling2d(cur_in,pool_size=params[2],strides=params[3])                        
+                    if params[0]=='maxpool':
+                        cur_in=tf.layers.max_pooling2d(cur_in,pool_size=params[2],strides=params[3])
+                    if params[0]=='avgpool':
+                        cur_in=tf.nn.pool(cur_in,window_shape=params[2],pooling_type='AVG',padding='SAME')
                     if params[0]=='conv':
                         W_shape=[params[2][0],params[2][1],prev_depth,params[4]]
                         b_shape=[params[4]]
-                        prev_depth=params[4]                        
+                        prev_depth=params[4]
                         W=tf.get_variable('W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
                         b = tf.get_variable('b'+str(counter)+'conv',shape=b_shape,initializer=tf.constant_initializer(0.0))
-
-                        #
+                        
                         z = tf.nn.conv2d(cur_in,W,params[3],'SAME') +b
                         if res_counter%self.res_stride==0:                            
                             if prev_res!=None:
