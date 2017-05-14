@@ -21,7 +21,7 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("batch_size", 20, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("epochs", 10, "Number of epochs to train.")
 tf.app.flags.DEFINE_integer("state_size", 500, "Size of each model hidden layer.")
 tf.app.flags.DEFINE_integer("output_size", 365, "The output size of your model.")
@@ -171,3 +171,4 @@ def main(_):
 
 if __name__ == "__main__":
     tf.app.run()
+

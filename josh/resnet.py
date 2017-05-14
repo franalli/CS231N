@@ -51,6 +51,7 @@ class placesModel(object):
 
         self.input_placeholder = tf.placeholder(tf.float32, shape=(None,self.height,self.width,self.channels), name='input_placeholder')
         self.label_placeholder = tf.placeholder(tf.int32, shape=(None,), name='label_placeholder')
+        self.is_train_placeholder = tf.placeholder(tf.bool, shape=(), name='is_train_placeholder')
 
         # ==== assemble pieces ====
         with tf.variable_scope("places_model", initializer=tf.uniform_unit_scaling_initializer(1.0)):
@@ -100,7 +101,7 @@ class placesModel(object):
                         b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
                         cur_in=tf.matmul(flat,W)+b
                     if params[0]=='batchnorm':
-                        cur_in=tf.layers.batch_normalization(cur_in)
+                        cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder)
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
@@ -125,7 +126,7 @@ class placesModel(object):
                                 
                         res_counter+=1
                         if params[5]:
-                            bn = tf.layers.batch_normalization(z)
+                            bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder)
                         h=tf.nn.relu(bn)
                         if counter%self.res_stride==0:                            
                             prev_res=z
@@ -153,6 +154,7 @@ class placesModel(object):
         input_feed = {}
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
+        input_feed[self.is_train_placeholder]=True
         output_feed = [self.train_op, self.loss]
         _, loss = session.run(output_feed, input_feed)
 
@@ -167,6 +169,7 @@ class placesModel(object):
         input_feed = {}
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
+        input_feed[self.is_train_placeholder]=False
         output_feed = [self.label_predictions]
         outputs = session.run(output_feed, input_feed)
 
@@ -182,7 +185,7 @@ class placesModel(object):
             scores.append(score)
             prog_train.update(i + 1, [("Predicting Images....",0.0)])
         print("")
-
+        scores=np.vstack(scores)
         predictions = np.argmax(scores, axis=-1)
         return predictions
 
@@ -200,6 +203,7 @@ class placesModel(object):
 
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
+        input_feed[self.is_train_placeholder]=False
 
         output_feed = [self.loss]
 
@@ -228,9 +232,9 @@ class placesModel(object):
             sample = len(dataset[0])
         else:
             #np.random.seed(0)
-            inds = np.random.choice(len(dataset[0]), sample)
+            inds = np.random.choice(len(dataset[0]), sample,replace=False)
             sampled = [elem[inds] for elem in dataset]
-            
+        
         predictions = self.answer(session, sampled)
         images, labels = sampled
         accuracy = np.mean(predictions == labels)
@@ -315,10 +319,10 @@ class placesModel(object):
         # print val_dataset[0].shape,val_dataset[1].shape
 
         if self.flags.debug:
-            train_dataset = [elem[:self.flags.batch_size*1] for elem in train_dataset]
-            val_dataset = [elem[:self.flags.batch_size] for elem in val_dataset]
+            train_dataset = [elem[:self.flags.batch_size*10] for elem in train_dataset]
+            val_dataset = [elem[:self.flags.batch_size*10] for elem in val_dataset]
             num_epochs = 100
-
+        
         # print train_dataset[0].shape,train_dataset[1].shape
         # print val_dataset[0].shape,val_dataset[1].shape
         # assert False
