@@ -101,7 +101,7 @@ class placesModel(object):
                         b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
                         cur_in=tf.matmul(flat,W)+b
                     if params[0]=='batchnorm':
-                        cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder)
+                        cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,scope="bn"+str(counter))
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
@@ -126,7 +126,7 @@ class placesModel(object):
                                 
                         res_counter+=1
                         if params[5]:
-                            bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder)
+                            bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder,scope="bn"+str(counter))
                         h=tf.nn.relu(bn)
                         if counter%self.res_stride==0:                            
                             prev_res=z
@@ -318,10 +318,10 @@ class placesModel(object):
         # print train_dataset[0].shape,train_dataset[1].shape
         # print val_dataset[0].shape,val_dataset[1].shape
 
-        if self.flags.debug:
-            train_dataset = [elem[:self.flags.batch_size*10] for elem in train_dataset]
-            val_dataset = [elem[:self.flags.batch_size*10] for elem in val_dataset]
-            num_epochs = 100
+        #if self.flags.debug:
+        #    train_dataset = [elem[:self.flags.batch_size*1] for elem in train_dataset]
+        #    val_dataset = [elem[:self.flags.batch_size*1] for elem in val_dataset]
+        #    num_epochs = 100
         
         # print train_dataset[0].shape,train_dataset[1].shape
         # print val_dataset[0].shape,val_dataset[1].shape
