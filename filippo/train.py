@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+# from __future__ import print_function
 
 import os
 import json
@@ -21,7 +22,7 @@ tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
-tf.app.flags.DEFINE_integer("batch_size", 150, "Batch size to use during training.")
+tf.app.flags.DEFINE_integer("batch_size", 50, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("epochs", 10, "Number of epochs to train.")
 tf.app.flags.DEFINE_integer("state_size", 1000, "Size of each model hidden layer.")
 tf.app.flags.DEFINE_integer("output_size", 365, "The output size of your model.")
@@ -29,7 +30,7 @@ tf.app.flags.DEFINE_string("data_dir", "data/places2", "Places directory")
 tf.app.flags.DEFINE_string("train_dir", "train", "Training directory to save the model parameters (default: ./train).")
 tf.app.flags.DEFINE_string("load_train_dir", "", "Training directory to load model parameters from to resume training (default: {train_dir}).")
 tf.app.flags.DEFINE_string("log_dir", "log", "Path to store log and flag files (default: ./log)")
-tf.app.flags.DEFINE_string("num_per_class", 1200, "Path to store log and flag files ")
+tf.app.flags.DEFINE_string("num_per_class", 0, "Path to store log and flag files ")
 tf.app.flags.DEFINE_integer("grad_clip", 1, "whether to clip gradients or not")
 tf.app.flags.DEFINE_string("optimizer", "adam", "adam / sgd")
 tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per print.")
@@ -84,7 +85,9 @@ def initialize_model(session, model, train_dir):
     return model
 
 
-def initialize_data(file_name,num_per_class=100):
+def initialize_data(file_name,num_per_class=5000):
+    if num_per_class == 0:
+        num_per_class = 10000000
     print ("LOADING", file_name, "data")
     f=open(FLAGS.data_dir+"/places365_"+file_name+".txt")
     X=[]
@@ -99,8 +102,11 @@ def initialize_data(file_name,num_per_class=100):
 
         counts[img_class]+=1
         if file_name=='train':
-            img_name = img_name[1:]         
-        img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode="RGB"),(FLAGS.input_height,FLAGS.input_width))
+            img_name = img_name[1:]
+        if FLAGS.input_height == 256 and FLAGS.input_width == 256:
+            img=misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode='RGB')
+        else:    
+            img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode='RGB'),(FLAGS.input_height,FLAGS.input_width))
         X.append(img)
         y.append(int(img_class))
     return np.array(X),np.array(y)
