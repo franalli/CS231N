@@ -36,6 +36,7 @@ tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per pri
 tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicates keep all.")
 tf.app.flags.DEFINE_integer("debug",1,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
+tf.app.flags.DEFINE_string("num_per_class", 100, "How many conv layers to take before adding in res and resaving")
 tf.app.flags.DEFINE_string("res_stride", 2, "How many conv layers to take before adding in res and resaving")
 layer_params=[("batchnorm",1,None,None,None),
               ("conv",1,(7,7),(1,2,2,1),64,  True),
@@ -84,15 +85,20 @@ def initialize_model(session, model, train_dir):
     return model
 
 
-def initialize_data(file_name):
+def initialize_data(file_name,num_per_class):
     print "LOADING", file_name, "data"
-    # f=open(FLAGS.data_dir+"/"+file_name+"/places365_train"+".txt")
     f=open(FLAGS.data_dir+"/places365_"+file_name+".txt")
     X=[]
     y=[]
+    counts={}
     for line in f:
         img_name,img_class=line.strip().split(" ")
-        # img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode="RGB"),(FLAGS.input_height,FLAGS.input_width))
+        if img_class not in counts:
+            counts[img_class]=0
+        if counts[img_class]>num_per_class:
+            continue
+
+        counts[img_class]+=1            
         img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode="RGB"),(FLAGS.input_height,FLAGS.input_width))
         X.append(img)
         y.append(int(img_class))
@@ -110,40 +116,41 @@ def main(_):
     # Do what you need to load datasets from FLAGS.data_dir
     if FLAGS.debug:
         print "Doing debug"
+        num_in_debug=50
         try:
-            arrs=np.load(FLAGS.data_dir+"/debug_"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+".npz")
+            arrs=np.load(FLAGS.data_dir+"/debug_"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(num_in_debug)+".npz")
             X_train,y_train,X_val,y_val=arrs['X_train'],arrs['y_train'],arrs['X_val'],arrs['y_val']
             print "Loaded from .npz file"
         except:
             print "Creating .npz file"
-            X,y=initialize_data("val")
+            X,y=initialize_data("val",num_in_debug+1)
             num_classes=np.max(y)+1
             X_train=[]
-            X_train=np.zeros((num_classes*10,FLAGS.input_height,FLAGS.input_width,3))
-            y_train=np.zeros((num_classes*10))
+            X_train=np.zeros((num_classes*num_in_debug,FLAGS.input_height,FLAGS.input_width,3))
+            y_train=np.zeros((num_classes*num_in_debug))
             X_val=np.zeros((num_classes,FLAGS.input_height,FLAGS.input_width,3))
             y_val=np.zeros((num_classes))
             for i in range(num_classes):
                 cur_X=X[y==i,:,:,:]
-                X_train[i*10:(i+1)*10,:,:,:]=cur_X[:10,:,:,:]
-                y_train[i*10:(i+1)*10]=np.zeros((10))+i
-                X_val[i,:,:,:]=cur_X[10,:,:,:]
+                X_train[i*num_in_debug:(i+1)*num_in_debug,:,:,:]=cur_X[:num_in_debug,:,:,:]
+                y_train[i*num_in_debug:(i+1)*num_in_debug]=np.zeros((num_in_debug))+i
+                X_val[i,:,:,:]=cur_X[num_in_debug,:,:,:]
                 y_val[i]=i
             X_train=np.array(X_train)
             y_train=np.array(y_train)
             X_val=np.array(X_val)
             y_val=np.array(y_val)
-            np.savez(FLAGS.data_dir+"/debug_"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width),X_train=X_train,y_train=y_train,X_val=X_val,y_val=y_val)
+            np.savez(FLAGS.data_dir+"/debug_"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(num_in_debug),X_train=X_train,y_train=y_train,X_val=X_val,y_val=y_val)
     else:
         try:
-            arrs=np.load(FLAGS.data_dir+"/full"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+".npz")
+            arrs=np.load(FLAGS.data_dir+"/full"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(FLAGS.num_per_class)+".npz")
             X_train,y_train,X_val,y_val=arrs['X_train'],arrs['y_train'],arrs['X_val'],arrs['y_val']
             print "Loaded from .npz file"
         except:
             print "Creating .npz file"
-            X_train,y_train=initialize_data("train")
+            X_train,y_train=initialize_data("train",FLAGS.num_per_class)
             X_val,y_val=initialize_data("val")
-            np.savez(FLAGS.data_dir+"/full"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width),X_train=X_train,y_train=y_train,X_val=X_val,y_val=y_val)
+            np.savez(FLAGS.data_dir+"/full"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(FLAGS.num_per_class),X_train=X_train,y_train=y_train,X_val=X_val,y_val=y_val)
 
     print "X_train",X_train.shape
     print "y_train",y_train.shape
