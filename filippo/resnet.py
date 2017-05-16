@@ -100,6 +100,8 @@ class placesModel(object):
                         W=tf.get_variable('FC_W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
                         b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
                         cur_in=tf.matmul(flat,W)+b
+                        if i<params[1]-1 and num_layer!=len(self.layer_params) :
+                            cur_in=tf.nn.relu(cur_in)
                     if params[0]=='batchnorm':
                         cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,name="bn"+str(counter))
                     if params[0]=='relu':
@@ -203,7 +205,7 @@ class placesModel(object):
 
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder] = False
+        input_feed[self.is_train_placeholder] = True
 
         output_feed = [self.loss]
 
@@ -250,6 +252,8 @@ class placesModel(object):
             loss = self.optimize(sess, *batch)
             prog_train.update(i + 1, [("train loss", loss)])
         print("")
+        logging.info("{}: {}".format("Train Loss", loss))
+        
 
         #if self.flags.debug == 0:
         prog_val = Progbar(target=1 + int(len(val_set[0]) / self.flags.batch_size))
@@ -257,6 +261,7 @@ class placesModel(object):
             val_loss = self.validate(sess, *batch)
             prog_val.update(i + 1, [("val loss", val_loss)])
         print("")
+        logging.info("{}: {}".format("Val Loss", val_loss))
 
         self.evaluate_answer(session=sess,
                              dataset=train_set,
