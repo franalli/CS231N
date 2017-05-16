@@ -50,7 +50,7 @@ layer_params=[("batchnorm",1,None,None,None),
               ("conv",1,(3,3),(1,2,2,1),512, True),
               ("conv",3,(3,3),(1,1,1,1),512, True),
               ("avgpool",1,(3,3),None, None,None),
-              ("fc",  1,500,  None,     None,None),
+              ("fc",  1,1000,  None,     None,None),
               ("fc",  1,365,  None,     None,None)]
 tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm)")
 

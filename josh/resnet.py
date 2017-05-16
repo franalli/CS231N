@@ -89,7 +89,9 @@ class placesModel(object):
             prev_res_depth=None
             res_counter=0
             counter=0
+            num_layer=0
             for params in self.layer_params:
+                num_layer+=1
                 #params is a tuple of (type, number,shape,stride,depth,use_batch_norm,
                 for i in range(params[1]):
                     counter+=1
@@ -100,8 +102,10 @@ class placesModel(object):
                         W=tf.get_variable('FC_W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
                         b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
                         cur_in=tf.matmul(flat,W)+b
+                        if i<params[1]-1 and num_layer!=len(self.layer_params) :
+                            cur_in=tf.nn.relu(cur_in)
                     if params[0]=='batchnorm':
-                        cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,scope="bn"+str(counter))
+                        cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,name="bn"+str(counter))
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
@@ -126,7 +130,7 @@ class placesModel(object):
                                 
                         res_counter+=1
                         if params[5]:
-                            bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder,scope="bn"+str(counter))
+                            bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder,name="bn"+str(counter))
                         h=tf.nn.relu(bn)
                         if counter%self.res_stride==0:                            
                             prev_res=z
@@ -169,7 +173,7 @@ class placesModel(object):
         input_feed = {}
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder]=False
+        input_feed[self.is_train_placeholder]=True
         output_feed = [self.label_predictions]
         outputs = session.run(output_feed, input_feed)
 
@@ -203,7 +207,7 @@ class placesModel(object):
 
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder]=False
+        input_feed[self.is_train_placeholder]=True
 
         output_feed = [self.loss]
 
