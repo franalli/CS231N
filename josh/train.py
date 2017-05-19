@@ -113,6 +113,8 @@ def initialize_model(session, model, train_dir):
 
 
 def initialize_data(file_name,num_per_class):
+    if num_per_class == 0:
+        num_per_class = 10000000
     print ("LOADING", file_name, "data")
     f=open(FLAGS.data_dir+"/places365_"+file_name+".txt")
     X=[]
