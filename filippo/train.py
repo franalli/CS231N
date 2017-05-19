@@ -38,22 +38,52 @@ tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicate
 tf.app.flags.DEFINE_integer("debug",0,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "32-resnet", "Name to save the .ckpt file")
 tf.app.flags.DEFINE_string("res_stride", 2, "How many conv layers to take before adding in res and resaving")
-layer_params=[("batchnorm",1,None,None,None),
-              ("conv",1,(7,7),(1,2,2,1),64,  True),
-              ("maxpool",1,(3,3), 2,None,None),
-              ("conv",1,(3,3),(1,2,2,1),64, True),
-              ("conv",5,(3,3),(1,1,1,1),64, True),
-              ("conv",1,(3,3),(1,2,2,1),128, True),
-              ("conv",7,(3,3),(1,1,1,1),128, True),
-              ("conv",1,(3,3),(1,2,2,1),256, True),
-              ("conv",11,(3,3),(1,1,1,1),256, True),
-              ("conv",1,(3,3),(1,2,2,1),512, True),
-              ("conv",5,(3,3),(1,1,1,1),512, True),
-              ("avgpool",1,(3,3),None, None,None),
-              ("fc",  1,1000,  None,     None,None),
-              ("fc",  1,365,  None,     None,None)]
+# layer_params=[("batchnorm",1,None,None,None),
+#               ("conv",1,(7,7),(1,2,2,1),64,  True),
+#               ("maxpool",1,(3,3), 2,None,None),
+#               ("conv",1,(3,3),(1,2,2,1),64, True),
+#               ("conv",5,(3,3),(1,1,1,1),64, True),
+#               ("conv",1,(3,3),(1,2,2,1),128, True),
+#               ("conv",7,(3,3),(1,1,1,1),128, True),
+#               ("conv",1,(3,3),(1,2,2,1),256, True),
+#               ("conv",11,(3,3),(1,1,1,1),256, True),
+#               ("conv",1,(3,3),(1,2,2,1),512, True),
+#               ("conv",5,(3,3),(1,1,1,1),512, True),
+#               ("avgpool",1,(3,3),None, None,None),
+#               ("fc",  1,1000,  None,     None,None),
+#               ("fc",  1,365,  None,     None,None)]
 
-tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm)")
+
+#Should be 18 layer ResNet
+
+layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
+layer1=[["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,True]]*2
+layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True],["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True]]
+layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
+layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
+layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+
+
+#Should be the 34 layer....
+# layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
+# layer1=[["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,True]]*3
+# layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True]]
+# layer2.extend([["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True]]*3)
+# layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
+# layer3.extend([["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]*5)
+# layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
+# layer4.extend([["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]*2)
+# layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+
+
+layer_params=[]
+layer_params.extend(layer0)
+layer_params.extend(layer1)
+layer_params.extend(layer2)
+layer_params.extend(layer3)
+layer_params.extend(layer4)
+layer_params.extend(layer5)
+tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm,add/set residual)")
 
 FLAGS = tf.app.flags.FLAGS
 
