@@ -93,7 +93,7 @@ class placesModel(object):
                 #params is a tuple of (type, number,shape,stride,depth,use_batch_norm,
                 for i in range(params[1]):
                     counter+=1
-                    print params
+                    print (params)
                     if params[0]=='fc':
                         flat=layers.flatten(cur_in)
                         W_shape=[flat.get_shape()[-1],params[2]]
@@ -123,7 +123,7 @@ class placesModel(object):
                         z = tf.nn.conv2d(cur_in,W,params[3],'SAME') +b
                         if params[6]:
                             if prev_res!=None:
-                                print "DOING RES!!!!!!!!!!!!!!!!",prev_res,z                                
+                                print ("DOING RES!!!!!!!!!!!!!!!!",prev_res,z)                                
                                 if prev_res_depth<prev_depth:
                                     #Takes care of the diffences in cross-sectional areas
                                     prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
@@ -140,7 +140,7 @@ class placesModel(object):
                             prev_res=h
                             prev_res_depth=prev_depth
                         cur_in=h
-                    print cur_in
+                    print (cur_in)
             self.label_predictions=cur_in            
             
 

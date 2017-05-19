@@ -113,7 +113,7 @@ def initialize_model(session, model, train_dir):
 
 
 def initialize_data(file_name,num_per_class):
-    print "LOADING", file_name, "data"
+    print ("LOADING", file_name, "data")
     f=open(FLAGS.data_dir+"/places365_"+file_name+".txt")
     X=[]
     y=[]
@@ -142,14 +142,14 @@ def main(_):
 
     # Do what you need to load datasets from FLAGS.data_dir
     if FLAGS.debug:
-        print "Doing debug"
+        print ("Doing debug")
         num_in_debug=FLAGS.num_per_class
         try:
             arrs=np.load(FLAGS.data_dir+"/debug_"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(num_in_debug)+".npz")
             X_train,y_train,X_val,y_val=arrs['X_train'],arrs['y_train'],arrs['X_val'],arrs['y_val']
-            print "Loaded from .npz file"
+            print ("Loaded from .npz file")
         except:
-            print "Creating .npz file"
+            print ("Creating .npz file")
             X,y=initialize_data("val",num_in_debug+1)
             num_classes=np.max(y)+1
             X_train=[]
@@ -172,17 +172,17 @@ def main(_):
         try:
             arrs=np.load(FLAGS.data_dir+"/full"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(FLAGS.num_per_class)+".npz")
             X_train,y_train,X_val,y_val=arrs['X_train'],arrs['y_train'],arrs['X_val'],arrs['y_val']
-            print "Loaded from .npz file"
+            print ("Loaded from .npz file")
         except:
-            print "Creating .npz file"
+            print ("Creating .npz file")
             X_train,y_train=initialize_data("train",FLAGS.num_per_class)
             X_val,y_val=initialize_data("val")
             np.savez(FLAGS.data_dir+"/full"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(FLAGS.num_per_class),X_train=X_train,y_train=y_train,X_val=X_val,y_val=y_val)
 
-    print "X_train",X_train.shape
-    print "y_train",y_train.shape
-    print "X_val",X_val.shape
-    print "y_val",y_val.shape
+    print ("X_train",X_train.shape)
+    print ("y_train",y_train.shape)
+    print ("X_val",X_val.shape)
+    print ("y_val",y_val.shape)
 
     X_train,X_val = preprocess_data(X_train,X_val)
     train_dataset = [X_train,y_train]
