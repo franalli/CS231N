@@ -125,6 +125,8 @@ class placesModel(object):
                             if prev_res!=None:
                                 print "DOING RES!!!!!!!!!!!!!!!!",prev_res,z                                
                                 if prev_res_depth<prev_depth:
+                                    #Takes care of the diffences in cross-sectional areas
+                                    prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
                                     #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
                                     prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
                                 elif prev_res_depth!=prev_depth:
