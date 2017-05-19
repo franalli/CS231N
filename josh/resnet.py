@@ -93,6 +93,7 @@ class placesModel(object):
                 #params is a tuple of (type, number,shape,stride,depth,use_batch_norm,
                 for i in range(params[1]):
                     counter+=1
+                    print params
                     if params[0]=='fc':
                         flat=layers.flatten(cur_in)
                         W_shape=[flat.get_shape()[-1],params[2]]
@@ -109,8 +110,8 @@ class placesModel(object):
                     if params[0]=='maxpool':
                         cur_in=tf.layers.max_pooling2d(cur_in,pool_size=params[2],strides=params[3])
                         if params[6]:                            
-                            prev_res=z
-                            prev_res_depth=prev_depth
+                            prev_res=cur_in
+                            prev_res_depth=cur_in.get_shape()[-1]
                     if params[0]=='avgpool':
                         cur_in=tf.nn.pool(cur_in,window_shape=params[2],pooling_type='AVG',padding='SAME')
                     if params[0]=='conv':
@@ -118,23 +119,23 @@ class placesModel(object):
                         b_shape=[params[4]]
                         prev_depth=params[4]
                         W=tf.get_variable('W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
-                        b = tf.get_variable('b'+str(counter)+'conv',shape=b_shape,initializer=tf.constant_initializer(0.0))
-                        
+                        b = tf.get_variable('b'+str(counter)+'conv',shape=b_shape,initializer=tf.constant_initializer(0.0))         
                         z = tf.nn.conv2d(cur_in,W,params[3],'SAME') +b
-                        if params[6]:                            
+                        if params[6]:
                             if prev_res!=None:
+                                print "DOING RES!!!!!!!!!!!!!!!!",prev_res,z                                
                                 if prev_res_depth<prev_depth:
                                     #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
                                     prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
                                 elif prev_res_depth!=prev_depth:
                                     print ("ERROR: residual of greater size then current size",prev_res_depth,"=>",prev_depth)
-                                    exit()
+                                    exit(1)
                                 z=prev_res+z
                         if params[5]:
                             bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder,name="bn"+str(counter))
                         h=tf.nn.relu(bn)
                         if params[6]:                            
-                            prev_res=z
+                            prev_res=h
                             prev_res_depth=prev_depth
                         cur_in=h
                     print cur_in

@@ -51,17 +51,29 @@ tf.app.flags.DEFINE_string("num_per_class", 10, "How many to have per class in d
               ("avgpool",1,(3,3),None, None,None),
               ("fc",  1,1000,  None,     None,None),
               ("fc",  1,365,  None,     None,None)]"""
-layer0=[("batchnorm",1,None,None,True),
-        ("conv",1,(7,7),(1,2,2,1),64,  True,False),
-        ("maxpool",1,(3,3), 2,None,None,True,True)]
-layer1=[["conv",1,(1,1),(1,1,1,1),64,  True,True],["conv",1,(3,3),(1,1,1,1),64,True,False],("conv",1,(1,1),(1,1,1,1),256,True,False)]*3
+"""
+#This should be the 50....
+layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
+layer1=[["conv",1,(1,1),(1,1,1,1),64,  True,False],["conv",1,(3,3),(1,1,1,1),64,True,False],("conv",1,(1,1),(1,1,1,1),256,True,True)]*3
 layer1[1][3]=(1,2,2,1)
-layer2=[["conv",1,(1,1),(1,1,1,1),128,  True,True],["conv",1,(3,3),(1,1,1,1),128,True,False],("conv",1,(1,1),(1,1,1,1),512,True,False)]*4
+layer2=[["conv",1,(1,1),(1,1,1,1),128,  True,False],["conv",1,(3,3),(1,1,1,1),128,True,False],("conv",1,(1,1),(1,1,1,1),512,True,True)]*4
 layer2[1][3]=(1,2,2,1)
-layer3=[["conv",1,(1,1),(1,1,1,1),256,  True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],("conv",1,(1,1),(1,1,1,1),1024,True,False)]*6
+layer3=[["conv",1,(1,1),(1,1,1,1),256,  True,False],["conv",1,(3,3),(1,1,1,1),256,True,False],("conv",1,(1,1),(1,1,1,1),1024,True,True)]*6
 layer3[1][3]=(1,2,2,1)
-layer4=[["conv",1,(1,1),(1,1,1,1),512,  True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],("conv",1,(1,1),(1,1,1,1),2048,True,False)]*3
+layer4=[["conv",1,(1,1),(1,1,1,1),512,  True,False],["conv",1,(3,3),(1,1,1,1),512,True,False],("conv",1,(1,1),(1,1,1,1),2048,True,True)]*3
 layer4[1][3]=(1,2,2,1)
+layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+"""
+#Should be 18 layer ResNet
+layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
+layer1=[["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,True]]*2
+#layer1[0][3]=(1,2,2,1)
+layer2=[["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True]]*2
+layer2[0][3]=(1,2,2,1)
+layer3=[["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]*2
+layer3[0][3]=(1,2,2,1)
+layer4=[["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]*2
+layer4[0][3]=(1,2,2,1)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
 layer_params=[]
 layer_params.extend(layer0)
