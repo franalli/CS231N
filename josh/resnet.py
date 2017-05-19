@@ -45,7 +45,6 @@ class placesModel(object):
         self.width = self.flags.input_width
         self.channels = 3
         self.layer_params=self.flags.layer_params
-        self.res_stride=self.flags.res_stride
 
         # ==== set up placeholder tokens ========
 
@@ -87,7 +86,6 @@ class placesModel(object):
             prev_depth=self.channels
             prev_res=None
             prev_res_depth=None
-            res_counter=0
             counter=0
             num_layer=0
             for params in self.layer_params:
@@ -110,6 +108,9 @@ class placesModel(object):
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
                         cur_in=tf.layers.max_pooling2d(cur_in,pool_size=params[2],strides=params[3])
+                        if params[6]:                            
+                            prev_res=z
+                            prev_res_depth=prev_depth
                     if params[0]=='avgpool':
                         cur_in=tf.nn.pool(cur_in,window_shape=params[2],pooling_type='AVG',padding='SAME')
                     if params[0]=='conv':
@@ -120,23 +121,23 @@ class placesModel(object):
                         b = tf.get_variable('b'+str(counter)+'conv',shape=b_shape,initializer=tf.constant_initializer(0.0))
                         
                         z = tf.nn.conv2d(cur_in,W,params[3],'SAME') +b
-                        if res_counter%self.res_stride==0:                            
+                        if params[6]:                            
                             if prev_res!=None:
-                                if prev_res_depth!=prev_depth:
-                                    assert prev_res_depth<prev_depth, "CANNOT go down in depth of convolutions"
+                                if prev_res_depth<prev_depth:
                                     #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
                                     prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
+                                elif prev_res_depth!=prev_depth:
+                                    print ("ERROR: residual of greater size then current size",prev_res_depth,"=>",prev_depth)
+                                    exit()
                                 z=prev_res+z
-                                
-                        res_counter+=1
                         if params[5]:
                             bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder,name="bn"+str(counter))
                         h=tf.nn.relu(bn)
-                        if counter%self.res_stride==0:                            
+                        if params[6]:                            
                             prev_res=z
                             prev_res_depth=prev_depth
                         cur_in=h
-
+                    print cur_in
             self.label_predictions=cur_in            
             
 

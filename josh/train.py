@@ -36,9 +36,8 @@ tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per pri
 tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicates keep all.")
 tf.app.flags.DEFINE_integer("debug",1,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
-tf.app.flags.DEFINE_string("num_per_class", 100, "How many conv layers to take before adding in res and resaving")
-tf.app.flags.DEFINE_string("res_stride", 2, "How many conv layers to take before adding in res and resaving")
-layer_params=[("batchnorm",1,None,None,None),
+tf.app.flags.DEFINE_string("num_per_class", 10, "How many to have per class in debug")
+"""layer_params=[("batchnorm",1,None,None,None),
               ("conv",1,(7,7),(1,2,2,1),64,  True),
               ("maxpool",1,(3,3), 2,None,None),
               ("conv",1,(3,3),(1,2,2,1),64, True),
@@ -51,8 +50,27 @@ layer_params=[("batchnorm",1,None,None,None),
               ("conv",3,(3,3),(1,1,1,1),512, True),
               ("avgpool",1,(3,3),None, None,None),
               ("fc",  1,1000,  None,     None,None),
-              ("fc",  1,365,  None,     None,None)]
-tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm)")
+              ("fc",  1,365,  None,     None,None)]"""
+layer0=[("batchnorm",1,None,None,True),
+        ("conv",1,(7,7),(1,2,2,1),64,  True,False),
+        ("maxpool",1,(3,3), 2,None,None,True,True)]
+layer1=[["conv",1,(1,1),(1,1,1,1),64,  True,True],["conv",1,(3,3),(1,1,1,1),64,True,False],("conv",1,(1,1),(1,1,1,1),256,True,False)]*3
+layer1[1][3]=(1,2,2,1)
+layer2=[["conv",1,(1,1),(1,1,1,1),128,  True,True],["conv",1,(3,3),(1,1,1,1),128,True,False],("conv",1,(1,1),(1,1,1,1),512,True,False)]*4
+layer2[1][3]=(1,2,2,1)
+layer3=[["conv",1,(1,1),(1,1,1,1),256,  True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],("conv",1,(1,1),(1,1,1,1),1024,True,False)]*6
+layer3[1][3]=(1,2,2,1)
+layer4=[["conv",1,(1,1),(1,1,1,1),512,  True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],("conv",1,(1,1),(1,1,1,1),2048,True,False)]*3
+layer4[1][3]=(1,2,2,1)
+layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+layer_params=[]
+layer_params.extend(layer0)
+layer_params.extend(layer1)
+layer_params.extend(layer2)
+layer_params.extend(layer3)
+layer_params.extend(layer4)
+layer_params.extend(layer5)
+tf.app.flags.DEFINE_integer("layer_params",layer_params,"list of tuples of (type, number,shape,stride,depth,use_batch_norm,add/set residual)")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -116,7 +134,7 @@ def main(_):
     # Do what you need to load datasets from FLAGS.data_dir
     if FLAGS.debug:
         print "Doing debug"
-        num_in_debug=50
+        num_in_debug=FLAGS.num_per_class
         try:
             arrs=np.load(FLAGS.data_dir+"/debug_"+str(FLAGS.input_height)+"_"+str(FLAGS.input_width)+"_"+str(num_in_debug)+".npz")
             X_train,y_train,X_val,y_val=arrs['X_train'],arrs['y_train'],arrs['X_val'],arrs['y_val']
