@@ -107,20 +107,12 @@ dataset. We will then tweak the architecture of the CNN's to see if we can
 introduce features that will improve performance for scene classification. \\
 
 In particular, for this report, we have trained the ResNet architecture, which
-utilizes residual modules which learn residuals between the output of a set of\\
-layers and their input. We use the architecture described in \cite{ResNet}.
-Additionally, as suggested in \cite{ResNet}, in order to allow a residual layer
-to span convolutional layers with multiple dimensions, we zero-pad the output
-of the layers to maintain a consistent size. To verify the correctness of our
-model, we overfit 100 samples.\\
-
-Future avenues of exploration include applying transfer learning by using
-CNN's with pre-trained weights for object classification, and retraining the
-final set of fully connected layers on the scene classification dataset.\\
-
-Finally, if time permits, we will explore an ablation study of our models to
-evaluate if there are certain characteristics of a CNN that allows it to perform
-well on scene classification.\\
+utilizes residual modules which learn residuals between the output of a set of
+layers and their input. We implement the architecture described in
+\cite{ResNet} using TensorFlow.  Additionally, as suggested in \cite{ResNet},
+in order to allow a residual layer to span convolutional layers with multiple
+dimensions, we zero-pad the output of the layers to maintain a consistent size.
+To verify the correctness of our model, we overfit 100 samples.\\
 
 \section{Preliminary Results}
 
@@ -135,7 +127,10 @@ As shown in Figure \ref{fig:top1-resnet34}, our preliminary model, with no
 tuning and initialized to random weights before training obtains over 30\%
 accuracy on the validation set. We expect further refinement of this model to
 allow us to boost this further. The leaderboard of the Places365-Standard dataset
-currently reports a 50\% best Top-1 accuracy.\\
+currently reports a 50\% best Top-1 accuracy. We also trained a smaller,
+18-layer ResNet (shown in Figure \ref{fig:top1-resnet18} and Table \ref{table:acc18}), for
+which we obtained similar results, with
+a training accuracy of around 60\%, and a validation accuracy of 36\% .\\
 
 \begin{table}
 \begin{center}
@@ -190,6 +185,47 @@ $59.66$ & $37.47$\\
 \caption{Top-1 Accuracy for 34-Layer ResNet after 10 training epochs}
 \label{table:acc}
 \end{table}
+
+\begin{figure}[t]
+\begin{center}
+  \includegraphics[width=0.8\linewidth]{accuracy_resnet18}
+\end{center}
+   \caption{Top-1 Training Accuracy vs Epoch for 18-Layer ResNet}
+\label{fig:top1-resnet18}
+\end{figure}
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+Training & Validation \\
+\hline\hline
+$66.4$ & $35.90$\\
+\hline
+\end{tabular}
+\end{center}
+\caption{Top-1 Accuracy for 18-Layer ResNet after 10 training epochs}
+\label{table:acc18}
+\end{table}
+
+\section{Discussion}
+
+Based on our results, though we perform well on the test set, our performance
+on the validation set is much lower due to overfitting. To address this, we
+will try tuning the learning rate further. In addition, we also noticed that
+our validation accuracy decreased during our later training epochs while the
+training accuracy continued to rise. To address this, we will add an early stop
+to terminate training. Furthermore, we expect to obtain stronger results after tuning other hyperparameters within the CNN's.\\
+
+\section{Future Work}
+
+Future avenues of exploration include applying transfer learning by using
+CNN's with pre-trained weights for object classification, and retraining the
+final set of fully connected layers on the scene classification dataset.\\
+
+Finally, if time permits, we will explore an ablation study of our models to
+evaluate if there are certain characteristics of a CNN that allows it to perform
+well on scene classification.\\
 
 
 \nocite{Lin}
