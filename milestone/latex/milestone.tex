@@ -212,23 +212,26 @@ $66.4$ & $35.90$\\
 
 Based on our results, though we perform well on the test set, our performance
 on the validation set is much lower due to overfitting. To address this, we
-will try tuning the learning rate further. In addition, we also noticed that
+will try adding regularization, such as through dropout layers, and tuning the
+learning rate further. In addition, we also noticed that
 our validation accuracy decreased during our later training epochs while the
 training accuracy continued to rise. To address this, we will add an early stop
-to terminate training. Furthermore, we expect to obtain stronger results after tuning other hyperparameters within the CNN's.\\
+to terminate training. Furthermore, we expect to obtain stronger results after
+tuning other hyperparameters within the CNN's.\\
 
 \section{Future Work}
 
-Future avenues of exploration include applying transfer learning by using
-CNN's with pre-trained weights for object classification, and retraining the
-final set of fully connected layers on the scene classification dataset.\\
-
-Futhermore, we plan on visually examining misclassified images, to
-gain more insight into reasons why our CNN's may be unable to categorize them properly.\\
-
-Finally, if time permits, we will explore an ablation study of our models to
-evaluate if there are certain characteristics of a CNN that allows it to perform
-well on scene classification.\\
+Our current setup provides us a foundation on which we will test further
+modifications and analyze how they improve or detract from our accuracy on the
+scene classification problem. Futhermore, we plan on visually examining
+misclassified images, to gain more insight into reasons why our CNN's may be
+unable to categorize them properly. Future avenues of exploration may also
+include applying transfer learning by using CNN's with pre-trained weights for
+object classification, and retraining the final set of fully connected layers
+on the scene classification dataset. Finally, if time permits, we will explore
+an ablation study of our models to evaluate if there are certain
+characteristics of a CNN that allows it to perform well on scene
+classification.\\
 
 
 \nocite{Lin}
