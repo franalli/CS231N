@@ -102,7 +102,7 @@ the 256x256 images to 64x64 to allow us to run the images without running out of
 memory on a Google Cloud Instance.\\
 
 \section{Technical Approach}
-We train existing CNN's such as ResNet\cite{ResNet}, and GoogLeNet on the
+We train existing CNN's such as ResNet\cite{ResNet} on the
 dataset. We will then tweak the architecture of the CNN's to see if we can
 introduce features that will improve performance for scene classification. \\
 
@@ -111,7 +111,9 @@ utilizes residual modules which learn residuals between the output of a set of
 layers and their input. We implement the architecture described in
 \cite{ResNet} using TensorFlow.  Additionally, as suggested in \cite{ResNet},
 in order to allow a residual layer to span convolutional layers with multiple
-dimensions, we zero-pad the output of the layers to maintain a consistent size.
+dimensions, we zero-pad the channel dimension of the output of the layers to maintain a consistent size with the residual. 
+When it comes to residuals between layers of different filter dimensions, we downsample the higher-dimensional residual with a max pool of stride and size of 2. 
+In the future, we plan to address the dimensionality shift in the residual layers with a projection matrix $W_s$ as described in the paper, as this yeilds slightly better performance than padding and downsampling. 
 To verify the correctness of our model, we overfit 100 samples.\\
 
 \section{Preliminary Results}
@@ -228,10 +230,8 @@ misclassified images, to gain more insight into reasons why our CNN's may be
 unable to categorize them properly. Future avenues of exploration may also
 include applying transfer learning by using CNN's with pre-trained weights for
 object classification, and retraining the final set of fully connected layers
-on the scene classification dataset. Finally, if time permits, we will explore
-an ablation study of our models to evaluate if there are certain
-characteristics of a CNN that allows it to perform well on scene
-classification.\\
+on the scene classification dataset. We also plan to investigate further forms of regularization such as dimensionality reduction through autoencorders.
+Finally, if time permits, we will explore an ablation study of our models to evaluate if there are certain characteristics of a CNN that allows it to perform well on scene classification.\\
 
 
 \nocite{Lin}
