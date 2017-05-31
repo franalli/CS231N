@@ -109,12 +109,12 @@ class placesModel(object):
 
                         if i<params[1]-1 and num_layer!=len(self.layer_params):
                             if params[5]:
-                                cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name = "fc_bn"+str(counter))
+                                cur_in = tf.layers.batch_normalization(cur_in,momentum=0.99,training=self.is_train_placeholder,name = "fc_bn"+str(counter))
                             cur_in=tf.nn.relu(cur_in)
                             cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder,name='fc_do'+str(counter))
 
                     if params[0]=='batchnorm':
-                            cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name="bn"+str(counter))
+                            cur_in = tf.layers.batch_normalization(cur_in,momentum=0.99,training=self.is_train_placeholder,name="bn"+str(counter))
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
@@ -148,7 +148,7 @@ class placesModel(object):
                                     exit(1)
                                 z=prev_res+z
                         if params[5]:
-                            z = tf.layers.batch_normalization(z,momentum=0.9,training=self.is_train_placeholder,name="conv_bn"+str(counter))
+                            z = tf.layers.batch_normalization(z,momentum=0.99,training=self.is_train_placeholder,name="conv_bn"+str(counter))
                         h=tf.nn.relu(z)
                         if params[6]:                            
                             prev_res=h
