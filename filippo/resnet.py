@@ -47,6 +47,8 @@ class placesModel(object):
         self.channels = 3
         self.layer_params=self.flags.layer_params
         self.l2_reg = self.flags.l2_reg
+        self.lr_decay = self.flags.lr_decay
+        self.train_size = 1803460
 
         # ==== set up placeholder tokens ========
 
@@ -63,7 +65,7 @@ class placesModel(object):
         self.global_step = tf.Variable(0, trainable=False)
         self.starter_learning_rate = self.flags.learning_rate
 
-        self.learning_rate = self.starter_learning_rate
+        self.learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,self.train_size/self.flags.batch_size, self.lr_decay, staircase=True)
 
         self.optimizer = get_optimizer("adam")
 
