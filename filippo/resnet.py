@@ -134,7 +134,7 @@ class placesModel(object):
                             padding='SAME',
                             activation=None,
                             kernel_initializer=layers.xavier_initializer(),
-                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.l2_reg, scope=None),
+                            kernel_regularizer=tf.contrib.layers.l2_regularizer(0, scope=None),
                             name='conv_'+str(counter))
                         if params[6]:
                             if prev_res!=None:
