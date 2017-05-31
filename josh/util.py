@@ -11,7 +11,6 @@ from __future__ import division
 import sys
 import time
 import logging
-import StringIO
 from collections import defaultdict, Counter, OrderedDict
 import numpy as np
 from numpy import array, zeros, allclose
@@ -79,29 +78,6 @@ def write_conll(fstream, data):
             fstream.write("\n")
         fstream.write("\n")
 
-def test_write_conll():
-    input = [
-        ("EU rejects German call to boycott British lamb .".split(), "ORG O MISC O O O MISC O O".split()),
-        ("Peter Blackburn".split(), "PER PER".split())
-        ]
-    output = """EU	ORG
-rejects	O
-German	MISC
-call	O
-to	O
-boycott	O
-British	MISC
-lamb	O
-.	O
-
-Peter	PER
-Blackburn	PER
-
-"""
-    output_ = StringIO.StringIO()
-    write_conll(output_, input)
-    output_ = output_.getvalue()
-    assert output == output_
 
 def load_word_vector_mapping(vocab_fstream, vector_fstream):
     """
