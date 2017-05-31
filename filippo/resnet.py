@@ -36,6 +36,7 @@ class placesModel(object):
         """
         Initializes your System
 
+
         :param args: pass in more arguments as needed
         """
         self.flags = flags
@@ -54,7 +55,7 @@ class placesModel(object):
         self.is_train_placeholder = tf.placeholder(tf.bool, shape=(), name='is_train_placeholder')
 
         # ==== assemble pieces ====
-        with tf.variable_scope("places_model", initializer=tf.uniform_unit_scaling_initializer(1.0)):
+        with tf.variable_scope("places2_model", initializer=tf.uniform_unit_scaling_initializer(1.0)):
             self.setup_graph()
             self.setup_loss()
 
@@ -65,21 +66,22 @@ class placesModel(object):
         self.learning_rate = self.starter_learning_rate
 
         self.optimizer = get_optimizer("adam")
-        
-        if self.flags.grad_clip:
-            # gradient clipping
-            self.optimizer = self.optimizer(self.learning_rate)
-            grads = self.optimizer.compute_gradients(self.loss)
-            for i, (grad, var) in enumerate(grads):
-                if grad is not None:
-                    grads[i] = (tf.clip_by_norm(grad, self.flags.max_gradient_norm), var)
-            self.train_op = self.optimizer.apply_gradients(grads, global_step=self.global_step)
-        else:
-            # no gradient clipping
-            self.train_op = self.optimizer(self.learning_rate).minimize(self.loss, global_step=self.global_step)
+
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            if self.flags.grad_clip:
+                # gradient clipping
+                self.optimizer = self.optimizer(self.learning_rate)
+                grads = self.optimizer.compute_gradients(self.loss)
+                for i, (grad, var) in enumerate(grads):
+                    if grad is not None:
+                        grads[i] = (tf.clip_by_norm(grad, self.flags.max_gradient_norm), var)
+                self.train_op = self.optimizer.apply_gradients(grads, global_step=self.global_step)
+            else:
+                # no gradient clipping
+                self.train_op = self.optimizer(self.learning_rate).minimize(self.loss, global_step=self.global_step)
 
         self.saver=tf.train.Saver()
-
 
     def setup_graph(self):
         with tf.variable_scope("complete_resnet",reuse=False):
@@ -107,15 +109,12 @@ class placesModel(object):
 
                         if i<params[1]-1 and num_layer!=len(self.layer_params):
                             if params[5]:
-                                # cur_in = tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder)
-                                cur_in = tf.contrib.layers.batch_norm(cur_in,center=True,scale=True,trainable=True,is_training=True,epsilon=0.0001)
+                                cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name = "fc_bn"+str(counter))
                             cur_in=tf.nn.relu(cur_in)
-                            cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder,name='do'+str(counter))
+                            cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder,name='fc_do'+str(counter))
 
                     if params[0]=='batchnorm':
-                        # cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,name="bn"+str(counter))
-                        with tf.variable_scope("bn"+str(counter)):
-                            cur_in = tf.contrib.layers.batch_norm(cur_in,center=True,scale=True,trainable=True,is_training=True,epsilon=0.0001)
+                            cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name="bn"+str(counter))
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
@@ -149,9 +148,7 @@ class placesModel(object):
                                     exit(1)
                                 z=prev_res+z
                         if params[5]:
-                            # bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder,name="bn"+str(counter))
-                            with tf.variable_scope("bn"+str(counter)):
-                                z = tf.contrib.layers.batch_norm(z,center=True,scale=True,is_training=True,trainable=True,epsilon=0.0001)
+                            z = tf.layers.batch_normalization(z,momentum=0.9,training=self.is_train_placeholder,name="conv_bn"+str(counter))
                         h=tf.nn.relu(z)
                         if params[6]:                            
                             prev_res=h
@@ -179,7 +176,7 @@ class placesModel(object):
         input_feed = {}
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder]=True
+        input_feed[self.is_train_placeholder] = True
         output_feed = [self.train_op, self.loss]
         _, loss = session.run(output_feed, input_feed)
 
@@ -194,7 +191,7 @@ class placesModel(object):
         input_feed = {}
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder]=False
+        input_feed[self.is_train_placeholder] = False
         output_feed = [self.label_predictions]
         outputs = session.run(output_feed, input_feed)
 
@@ -228,7 +225,7 @@ class placesModel(object):
 
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder]=False
+        input_feed[self.is_train_placeholder] = False
 
         output_feed = [self.loss]
 
