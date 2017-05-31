@@ -18,8 +18,8 @@ from IPython import embed
 logging.basicConfig(level=logging.INFO)
 
 tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate.")
-tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
-tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
+tf.app.flags.DEFINE_float("max_gradient_norm", 10.0, "Clip gradients to this norm.")
+tf.app.flags.DEFINE_float("dropout", 0.7, "Fraction of units randomly dropped on non-recurrent connections.")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
@@ -37,31 +37,18 @@ tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per pri
 tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicates keep all.")
 tf.app.flags.DEFINE_integer("debug",0,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "32-resnet", "Name to save the .ckpt file")
-tf.app.flags.DEFINE_string("res_stride", 2, "How many conv layers to take before adding in res and resaving")
-# layer_params=[("batchnorm",1,None,None,None),
-#               ("conv",1,(7,7),(1,2,2,1),64,  True),
-#               ("maxpool",1,(3,3), 2,None,None),
-#               ("conv",1,(3,3),(1,2,2,1),64, True),
-#               ("conv",5,(3,3),(1,1,1,1),64, True),
-#               ("conv",1,(3,3),(1,2,2,1),128, True),
-#               ("conv",7,(3,3),(1,1,1,1),128, True),
-#               ("conv",1,(3,3),(1,2,2,1),256, True),
-#               ("conv",11,(3,3),(1,1,1,1),256, True),
-#               ("conv",1,(3,3),(1,2,2,1),512, True),
-#               ("conv",5,(3,3),(1,1,1,1),512, True),
-#               ("avgpool",1,(3,3),None, None,None),
-#               ("fc",  1,1000,  None,     None,None),
-#               ("fc",  1,365,  None,     None,None)]
+# tf.app.flags.DEFINE_string("res_stride", 2, "How many conv layers to take before adding in res and resaving")
+tf.app.flags.DEFINE_string("l2_reg", 1e2, "L2 regularization strength")
 
 
 #Should be 18 layer ResNet
 
-layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
-layer1=[["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,True]]*2
-layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True],["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True]]
-layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
-layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
-layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),2,64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
+layer1=[["conv",1,(3,3),1,64,True,False],["conv",1,(3,3),1,64,True,True]]*2
+layer2=[["conv",1,(3,3),2,128,True,False],["conv",1,(3,3),1,128,True,True],["conv",1,(3,3),1,128,True,False],["conv",1,(3,3),1,128,True,True]]
+layer3=[["conv",1,(3,3),2,256,True,False],["conv",1,(3,3),1,256,True,True],["conv",1,(3,3),1,256,True,False],["conv",1,(3,3),1,256,True,True]]
+layer4=[["conv",1,(3,3),2,512,True,False],["conv",1,(3,3),1,512,True,True],["conv",1,(3,3),1,512,True,False],["conv",1,(3,3),1,512,True,True]]
+layer5=[("fc",  1,1000,  None, None,True,False),("fc",  1,1000,  None, None,True,False),("fc",  1,365, None, None,False,False)]
 
 
 #Should be the 34 layer....

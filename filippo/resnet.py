@@ -36,6 +36,7 @@ class placesModel(object):
         """
         Initializes your System
 
+
         :param args: pass in more arguments as needed
         """
         self.flags = flags
@@ -45,7 +46,7 @@ class placesModel(object):
         self.width = self.flags.input_width
         self.channels = 3
         self.layer_params=self.flags.layer_params
-        self.res_stride=self.flags.res_stride
+        self.l2_reg = self.flags.l2_reg
 
         # ==== set up placeholder tokens ========
 
@@ -54,7 +55,7 @@ class placesModel(object):
         self.is_train_placeholder = tf.placeholder(tf.bool, shape=(), name='is_train_placeholder')
 
         # ==== assemble pieces ====
-        with tf.variable_scope("places_model", initializer=tf.uniform_unit_scaling_initializer(1.0)):
+        with tf.variable_scope("places2_model", initializer=tf.uniform_unit_scaling_initializer(1.0)):
             self.setup_graph()
             self.setup_loss()
 
@@ -65,76 +66,95 @@ class placesModel(object):
         self.learning_rate = self.starter_learning_rate
 
         self.optimizer = get_optimizer("adam")
-        
-        if self.flags.grad_clip:
-            # gradient clipping
-            self.optimizer = self.optimizer(self.learning_rate)
-            grads = self.optimizer.compute_gradients(self.loss)
-            for i, (grad, var) in enumerate(grads):
-                if grad is not None:
-                    grads[i] = (tf.clip_by_norm(grad, self.flags.max_gradient_norm), var)
-            self.train_op = self.optimizer.apply_gradients(grads, global_step=self.global_step)
-        else:
-            # no gradient clipping
-            self.train_op = self.optimizer(self.learning_rate).minimize(self.loss, global_step=self.global_step)
+
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            if self.flags.grad_clip:
+                # gradient clipping
+                self.optimizer = self.optimizer(self.learning_rate)
+                grads = self.optimizer.compute_gradients(self.loss)
+                for i, (grad, var) in enumerate(grads):
+                    if grad is not None:
+                        grads[i] = (tf.clip_by_norm(grad, self.flags.max_gradient_norm), var)
+                self.train_op = self.optimizer.apply_gradients(grads, global_step=self.global_step)
+            else:
+                # no gradient clipping
+                self.train_op = self.optimizer(self.learning_rate).minimize(self.loss, global_step=self.global_step)
 
         self.saver=tf.train.Saver()
 
-
     def setup_graph(self):
-        with tf.variable_scope("simple_feed_forward",reuse=False):
+        with tf.variable_scope("complete_resnet",reuse=False):
             cur_in=self.input_placeholder
             prev_depth=self.channels
             prev_res=None
             prev_res_depth=None
-            res_counter=0
             counter=0
+            num_layer=0
             for params in self.layer_params:
+                num_layer+=1
                 #params is a tuple of (type, number,shape,stride,depth,use_batch_norm,
                 for i in range(params[1]):
                     counter+=1
+                    print (params)
                     if params[0]=='fc':
+
                         flat=layers.flatten(cur_in)
-                        W_shape=[flat.get_shape()[-1],params[2]]
-                        b_shape=[params[2]]
-                        W=tf.get_variable('FC_W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
-                        b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
-                        cur_in=tf.matmul(flat,W)+b
-                        if i<params[1]-1 and num_layer!=len(self.layer_params) :
+                        cur_in = tf.layers.dense(inputs=flat,
+                            units=params[2],
+                            activation=None,
+                            kernel_initializer=layers.xavier_initializer(),
+                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.l2_reg, scope='FC_'+str(counter)),
+                            name='FC_'+str(counter))
+
+                        if i<params[1]-1 and num_layer!=len(self.layer_params):
+                            if params[5]:
+                                cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name = "fc_bn"+str(counter))
                             cur_in=tf.nn.relu(cur_in)
+                            cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder,name='fc_do'+str(counter))
+
                     if params[0]=='batchnorm':
-                        cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,name="bn"+str(counter))
+                            cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name="bn"+str(counter))
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
                         cur_in=tf.layers.max_pooling2d(cur_in,pool_size=params[2],strides=params[3])
+                        if params[6]:                            
+                            prev_res=cur_in
+                            prev_res_depth=cur_in.get_shape()[-1]
                     if params[0]=='avgpool':
                         cur_in=tf.nn.pool(cur_in,window_shape=params[2],pooling_type='AVG',padding='SAME')
                     if params[0]=='conv':
-                        W_shape=[params[2][0],params[2][1],prev_depth,params[4]]
-                        b_shape=[params[4]]
                         prev_depth=params[4]
-                        W=tf.get_variable('W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
-                        b = tf.get_variable('b'+str(counter)+'conv',shape=b_shape,initializer=tf.constant_initializer(0.0))
-                        
-                        z = tf.nn.conv2d(cur_in,W,params[3],'SAME') +b
-                        if res_counter%self.res_stride==0:                            
+                        z = tf.layers.conv2d(inputs=cur_in,
+                            filters=params[4],
+                            kernel_size=[params[2][0],params[2][1]],
+                            strides=params[3],
+                            padding='SAME',
+                            activation=None,
+                            kernel_initializer=layers.xavier_initializer(),
+                            kernel_regularizer=None,
+                            name='conv_'+str(counter))
+                        if params[6]:
                             if prev_res!=None:
-                                if prev_res_depth!=prev_depth:
-                                    assert prev_res_depth<prev_depth, "CANNOT go down in depth of convolutions"
+                                # print ("DOING RES!!!!!!!!!!!!!!!!",prev_res,z)                                
+                                if prev_res_depth<prev_depth:
+                                    #Takes care of the diffences in cross-sectional areas
+                                    prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
                                     #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
                                     prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
+                                elif prev_res_depth!=prev_depth:
+                                    # print ("ERROR: residual of greater size then current size",prev_res_depth,"=>",prev_depth)
+                                    exit(1)
                                 z=prev_res+z
-                                
-                        res_counter+=1
                         if params[5]:
-                            bn = tf.layers.batch_normalization(z,training=self.is_train_placeholder)
-                        h=tf.nn.relu(bn)
-                        if counter%self.res_stride==0:                            
-                            prev_res=z
+                            z = tf.layers.batch_normalization(z,momentum=0.9,training=self.is_train_placeholder,name="conv_bn"+str(counter))
+                        h=tf.nn.relu(z)
+                        if params[6]:                            
+                            prev_res=h
                             prev_res_depth=prev_depth
                         cur_in=h
-
+                    # print (cur_in)
             self.label_predictions=cur_in            
             
 
@@ -171,7 +191,7 @@ class placesModel(object):
         input_feed = {}
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder] = True
+        input_feed[self.is_train_placeholder] = False
         output_feed = [self.label_predictions]
         outputs = session.run(output_feed, input_feed)
 
@@ -205,7 +225,7 @@ class placesModel(object):
 
         input_feed[self.input_placeholder] = image_batch
         input_feed[self.label_placeholder] = label_batch
-        input_feed[self.is_train_placeholder] = True
+        input_feed[self.is_train_placeholder] = False
 
         output_feed = [self.loss]
 
@@ -252,8 +272,6 @@ class placesModel(object):
             loss = self.optimize(sess, *batch)
             prog_train.update(i + 1, [("train loss", loss)])
         print("")
-        logging.info("{}: {}".format("Train Loss", loss))
-        
 
         #if self.flags.debug == 0:
         prog_val = Progbar(target=1 + int(len(val_set[0]) / self.flags.batch_size))
@@ -261,7 +279,6 @@ class placesModel(object):
             val_loss = self.validate(sess, *batch)
             prog_val.update(i + 1, [("val loss", val_loss)])
         print("")
-        logging.info("{}: {}".format("Val Loss", val_loss))
 
         self.evaluate_answer(session=sess,
                              dataset=train_set,
@@ -324,9 +341,9 @@ class placesModel(object):
         # print val_dataset[0].shape,val_dataset[1].shape
 
         if self.flags.debug:
-            train_dataset = [elem[:self.flags.batch_size] for elem in train_dataset]
-            val_dataset = [elem[:self.flags.batch_size] for elem in val_dataset]
-            num_epochs = 100
+           train_dataset = [elem[:self.flags.batch_size*1] for elem in train_dataset]
+           val_dataset = [elem[:self.flags.batch_size*1] for elem in val_dataset]
+           num_epochs = 100
         
         # print train_dataset[0].shape,train_dataset[1].shape
         # print val_dataset[0].shape,val_dataset[1].shape
