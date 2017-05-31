@@ -110,7 +110,7 @@ class placesModel(object):
                                 # cur_in = tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder)
                                 cur_in = tf.contrib.layers.batch_norm(cur_in,center=True,scale=True,trainable=True,is_training=True,epsilon=0.0001)
                             cur_in=tf.nn.relu(cur_in)
-                            cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder)
+                            cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder,name='do'+str(counter))
 
                     if params[0]=='batchnorm':
                         # cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,name="bn"+str(counter))
@@ -126,7 +126,6 @@ class placesModel(object):
                     if params[0]=='avgpool':
                         cur_in=tf.nn.pool(cur_in,window_shape=params[2],pooling_type='AVG',padding='SAME')
                     if params[0]=='conv':
-
                         prev_depth=params[4]
                         z = tf.layers.conv2d(inputs=cur_in,
                             filters=params[4],
