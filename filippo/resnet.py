@@ -47,6 +47,8 @@ class placesModel(object):
         self.channels = 3
         self.layer_params=self.flags.layer_params
         self.l2_reg = self.flags.l2_reg
+        self.lr_decay = self.flags.lr_decay
+        self.train_size = 1803460
 
         # ==== set up placeholder tokens ========
 
@@ -63,7 +65,7 @@ class placesModel(object):
         self.global_step = tf.Variable(0, trainable=False)
         self.starter_learning_rate = self.flags.learning_rate
 
-        self.learning_rate = self.starter_learning_rate
+        self.learning_rate = tf.train.exponential_decay(self.starter_learning_rate, self.global_step,self.train_size/self.flags.batch_size, self.lr_decay, staircase=True)
 
         self.optimizer = get_optimizer("adam")
 
@@ -109,12 +111,12 @@ class placesModel(object):
 
                         if i<params[1]-1 and num_layer!=len(self.layer_params):
                             if params[5]:
-                                cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name = "fc_bn"+str(counter))
+                                cur_in = tf.layers.batch_normalization(cur_in,momentum=0.99,training=self.is_train_placeholder,name = "fc_bn"+str(counter))
                             cur_in=tf.nn.relu(cur_in)
                             cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder,name='fc_do'+str(counter))
 
                     if params[0]=='batchnorm':
-                            cur_in = tf.layers.batch_normalization(cur_in,momentum=0.9,training=self.is_train_placeholder,name="bn"+str(counter))
+                            cur_in = tf.layers.batch_normalization(cur_in,momentum=0.99,training=self.is_train_placeholder,name="bn"+str(counter))
                     if params[0]=='relu':
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
@@ -148,7 +150,7 @@ class placesModel(object):
                                     exit(1)
                                 z=prev_res+z
                         if params[5]:
-                            z = tf.layers.batch_normalization(z,momentum=0.9,training=self.is_train_placeholder,name="conv_bn"+str(counter))
+                            z = tf.layers.batch_normalization(z,momentum=0.99,training=self.is_train_placeholder,name="conv_bn"+str(counter))
                         h=tf.nn.relu(z)
                         if params[6]:                            
                             prev_res=h
