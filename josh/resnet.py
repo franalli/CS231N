@@ -195,6 +195,25 @@ class placesModel(object):
         predictions = np.argmax(scores, axis=-1)
         return predictions
 
+    def answer_top_5(self, session, data):
+
+        scores = []
+        prog_train = Progbar(target=1 + int(len(data[0]) / self.flags.batch_size))
+        for i, batch in enumerate(self.minibatches(data, self.flags.batch_size, shuffle=False)):
+            score = self.forward_pass(session, *batch)  
+            scores.append(score)
+            prog_train.update(i + 1, [("Predicting Images....",0.0)])
+        print("")
+        scores=np.vstack(scores)
+        pred_index = np.argmax(scores, axis=-1)
+        scores[:,pred_index]=-1*float('inf')
+        predictions=np.vstack((pred_index))
+        for i in range(4):
+            pred_index = np.argmax(scores, axis=-1)
+            scores[:,pred_index]=-1*float('inf')
+            predictions=np.hstack((predictions,np.reshape(pred_index,(-1,1))))
+        return predictions
+
     def validate(self, session, image_batch, label_batch):
         """
         Iterate through the validation dataset and determine what
