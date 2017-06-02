@@ -61,6 +61,7 @@ layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,
 layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]"""
+"""
 #Should be the 34 layer....
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
 layer1=[["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,True]]*3
@@ -72,6 +73,21 @@ layer3.extend([["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
 layer4.extend([["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]*2)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+"""
+
+#Should be the 50 layer
+layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
+layer1=[["conv",1,(1,1),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(1,1),(1,1,1,1),128,True,True]]*3
+#layer1[0][3]=(1,2,2,1)
+layer2=[["conv",1,(1,1),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(1,1),(1,1,1,1),512,True,True]]
+layer2.extend([["conv",1,(1,1),(1,1,1,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(1,1),(1,1,1,1),512,True,True]]*3)
+layer3=[["conv",1,(1,1),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(1,1),(1,1,1,1),1024,True,True]]
+layer3.extend([["conv",1,(1,1),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(1,1),(1,1,1,1),1024,True,True]]*3)
+layer4=[["conv",1,(1,1),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(1,1),(1,1,1,1),2048,True,True]]
+layer4.extend([["conv",1,(1,1),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(1,1),(1,1,1,1),2048,True,True]]*3)
+layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+
+
 layer_params=[]
 layer_params.extend(layer0)
 layer_params.extend(layer1)

@@ -108,9 +108,10 @@ class placesModel(object):
                         cur_in=tf.nn.relu(cur_in)
                     if params[0]=='maxpool':
                         cur_in=tf.layers.max_pooling2d(cur_in,pool_size=params[2],strides=params[3])
-                        if params[6]:                            
+                        if params[6]:                           
                             prev_res=cur_in
-                            prev_res_depth=cur_in.get_shape()[-1]
+                            prev_res_depth=prev_depth#cur_in.get_shape()[-1]
+                            #print "HERE",params,prev_depth,prev_res_depth
                     if params[0]=='avgpool':
                         cur_in=tf.nn.pool(cur_in,window_shape=params[2],pooling_type='AVG',padding='SAME')
                     if params[0]=='conv':
@@ -124,7 +125,8 @@ class placesModel(object):
                             if prev_res!=None:
                                 if prev_res_depth<prev_depth:
                                     #Takes care of the diffences in cross-sectional areas
-                                    prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
+                                    if prev_res.get_shape()[1]!=z.get_shape()[1]:
+                                        prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
                                     #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
                                     prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
                                 elif prev_res_depth!=prev_depth:
