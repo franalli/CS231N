@@ -159,7 +159,6 @@ def preprocess_data(X_train,X_val):
 def answer5(model,session,examples,filenames,outfile):
     examples[0]=examples[0][:100,:,:]
     examples[1]=examples[1][:100]
-    print len(examples),examples[1].shape
     preds=model.answer_top_5(session,examples)
     f=open(outfile,'w+')
     for name,pred in zip(list(filenames),list(preds)):
