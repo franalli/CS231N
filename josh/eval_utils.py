@@ -42,7 +42,7 @@ def generate_label_map():
         cats[int(tokens[1])] = tokens[0]
     return cats
 
-def evaluate(model,sess,examples, correct_limit=5, incorrect_limit=20, correct_filter = [298, 190, 331, 170,2,229], incorrect_filter = [363, 330, 21, 37, 7, 225, 247]):
+def evaluate(model,sess,examples, correct_limit=5, incorrect_limit=20, correct_filter = [298, 190, 106, 170,2,229], incorrect_filter = [363, 330, 21, 37, 7, 225, 247]):
     #model is an instance of placesModel
     #sess is the tensorflow session
     #examples is a length 2 list of (example_images, example_labels)
