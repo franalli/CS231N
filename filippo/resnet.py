@@ -15,7 +15,7 @@ from util import Progbar, minibatches
 
 # from evaluate import exact_match_score, f1_score
 
-from IPython import embed
+# from IPython import embed
 
 from tensorflow.python.ops.gen_math_ops import _batch_mat_mul as batch_matmul
 
@@ -142,7 +142,10 @@ class placesModel(object):
                                 # print ("DOING RES!!!!!!!!!!!!!!!!",prev_res,z)                                
                                 if prev_res_depth<prev_depth:
                                     #Takes care of the diffences in cross-sectional areas
-                                    prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
+                                    W = prev_depth
+                                    Ws = tf.get_variable(name='Ws'+str(counter),shape=(W,W/2),dtype=tf.float32,initializer=layers.xavier_initializer())
+                                    prev_res = tf.matmul(tf.transpose(Ws,tf.matmul(prev_res,Ws)))
+                                    # prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
                                     #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
                                     prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
                                 elif prev_res_depth!=prev_depth:
