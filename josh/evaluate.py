@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
+tf.app.flags.DEFINE_float("l2_reg", 1e4, "Regularization strength on fully connected layers")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
@@ -34,40 +35,19 @@ tf.app.flags.DEFINE_integer("grad_clip", 1, "whether to clip gradients or not")
 tf.app.flags.DEFINE_string("optimizer", "adam", "adam / sgd")
 tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per print.")
 tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicates keep all.")
-tf.app.flags.DEFINE_integer("debug",1,"Whether or not to use debug dataset of 10 images per class from val")
+tf.app.flags.DEFINE_integer("debug",0,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
-tf.app.flags.DEFINE_string("num_per_class", 10, "How many to have per class in debug")
-"""layer_params=[("batchnorm",1,None,None,None),
-              ("conv",1,(7,7),(1,2,2,1),64,  True),
-              ("maxpool",1,(3,3), 2,None,None),
-              ("conv",1,(3,3),(1,2,2,1),64, True),
-              ("conv",3,(3,3),(1,1,1,1),64, True),
-              ("conv",1,(3,3),(1,2,2,1),128, True),
-              ("conv",3,(3,3),(1,1,1,1),128, True),
-              ("conv",1,(3,3),(1,2,2,1),256, True),
-              ("conv",3,(3,3),(1,1,1,1),256, True),
-              ("conv",1,(3,3),(1,2,2,1),512, True),
-              ("conv",3,(3,3),(1,1,1,1),512, True),
-              ("avgpool",1,(3,3),None, None,None),
-              ("fc",  1,1000,  None,     None,None),
-              ("fc",  1,365,  None,     None,None)]"""
-<<<<<<< HEAD
-=======
-
->>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
+tf.app.flags.DEFINE_string("num_per_class", 0, "How many to have per class in debug")
 #Should be 18 layer ResNet
-"""
+
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
 layer1=[["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,True]]*2
 #layer1[0][3]=(1,2,2,1)
 layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True],["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True]]
 layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
-<<<<<<< HEAD
-layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]"""
-=======
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
->>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
+
 """
 #Should be the 34 layer....
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -80,10 +60,6 @@ layer3.extend([["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
 layer4.extend([["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]*2)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
-<<<<<<< HEAD
-"""
-=======
->>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
 
 #Should be the 50 layer
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -97,7 +73,6 @@ layer4=[["conv",1,(1,1),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,
 layer4.extend([["conv",1,(1,1),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(1,1),(1,1,1,1),2048,True,True]]*3)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
 """
-
 
 layer_params=[]
 layer_params.extend(layer0)
@@ -163,14 +138,23 @@ def initialize_data(file_name,num_per_class):
     return np.array(X),np.array(y),np.array(filenames)
 
 def preprocess_data(X_train,X_val):
-    mean_image = np.mean(X_train, axis = 0)
+    mean_image= np.mean(X_train, axis = 0,dtype=X_train.dtype)
     X_train -= mean_image
     X_val -= mean_image
     return X_train,X_val
 
+def accuracy5(model,session,examples,filenames,true_labels):
+    preds=model.answer_top_5(session,examples)
+    right=0
+    wrong=0
+    for i in range(true_labels.shape[0]):
+        if true_labels[i] in list(preds[i,:]):
+            right+=1
+        else:
+            wrong+=1
+    return right/float(right+wrong)
+
 def answer5(model,session,examples,filenames,outfile):
-    examples[0]=examples[0][:100,:,:]
-    examples[1]=examples[1][:100]
     preds=model.answer_top_5(session,examples)
     f=open(outfile,'w+')
     for name,pred in zip(list(filenames),list(preds)):
@@ -207,12 +191,14 @@ def evaluate(model,sess,examples):
 def main(_):
 
     # Do what you need to load datasets from FLAGS.data_dir
+    """
     try:
         arrs=np.load(FLAGS.data_dir+"/test.npz")
         X_test,y_test,names_test=arrs['X_test'],arrs['y_test'],arrs['names_test']
     except:
         X_test,y_test,names_test=initialize_data("test",0)
         np.savez(FLAGS.data_dir+"/test",X_test=X_test,y_test=y_test,names_test=names_test)
+    """
     if FLAGS.debug:
         print ("Doing debug")
         num_in_debug=FLAGS.num_per_class
@@ -277,14 +263,8 @@ def main(_):
 
         save_train_dir = get_normalized_train_dir(FLAGS.train_dir)
         saver = tf.train.Saver()
-<<<<<<< HEAD
-        
-        evaluate(model,sess,val_dataset)
-
-=======
         #evaluate(model,sess,val_dataset)
-        answer5(model,sess,[X_test,y_test],names_test,"preds.txt")
->>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
+        print ("TOP 5 ACCURACY:",accuracy5(model,sess,[X_val,y_val],None,y_val))
 
 if __name__ == "__main__":
     tf.app.run()

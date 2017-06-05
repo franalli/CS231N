@@ -38,20 +38,6 @@ tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicate
 tf.app.flags.DEFINE_integer("debug",0,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
 tf.app.flags.DEFINE_string("num_per_class", 0, "How many to have per class in debug")
-"""layer_params=[("batchnorm",1,None,None,None),
-              ("conv",1,(7,7),(1,2,2,1),64,  True),
-              ("maxpool",1,(3,3), 2,None,None),
-              ("conv",1,(3,3),(1,2,2,1),64, True),
-              ("conv",3,(3,3),(1,1,1,1),64, True),
-              ("conv",1,(3,3),(1,2,2,1),128, True),
-              ("conv",3,(3,3),(1,1,1,1),128, True),
-              ("conv",1,(3,3),(1,2,2,1),256, True),
-              ("conv",3,(3,3),(1,1,1,1),256, True),
-              ("conv",1,(3,3),(1,2,2,1),512, True),
-              ("conv",3,(3,3),(1,1,1,1),512, True),
-              ("avgpool",1,(3,3),None, None,None),
-              ("fc",  1,1000,  None,     None,None),
-              ("fc",  1,365,  None,     None,None)]"""
 #Should be 18 layer ResNet
 
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -61,6 +47,7 @@ layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,
 layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+
 """
 #Should be the 34 layer....
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -73,10 +60,6 @@ layer3.extend([["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
 layer4.extend([["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]*2)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
-<<<<<<< HEAD
-
-=======
->>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
 
 #Should be the 50 layer
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
