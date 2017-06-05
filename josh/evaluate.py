@@ -51,6 +51,10 @@ tf.app.flags.DEFINE_string("num_per_class", 10, "How many to have per class in d
               ("avgpool",1,(3,3),None, None,None),
               ("fc",  1,1000,  None,     None,None),
               ("fc",  1,365,  None,     None,None)]"""
+<<<<<<< HEAD
+=======
+
+>>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
 #Should be 18 layer ResNet
 """
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -59,7 +63,11 @@ layer1=[["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,Tr
 layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True],["conv",1,(3,3),(1,1,1,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,True,True]]
 layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
+<<<<<<< HEAD
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]"""
+=======
+layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+>>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
 """
 #Should be the 34 layer....
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -72,7 +80,10 @@ layer3.extend([["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
 layer4.extend([["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]*2)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+<<<<<<< HEAD
 """
+=======
+>>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
 
 #Should be the 50 layer
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -85,6 +96,7 @@ layer3.extend([["conv",1,(1,1),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,
 layer4=[["conv",1,(1,1),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(1,1),(1,1,1,1),2048,True,True]]
 layer4.extend([["conv",1,(1,1),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(1,1),(1,1,1,1),2048,True,True]]*3)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+"""
 
 
 layer_params=[]
@@ -134,6 +146,7 @@ def initialize_data(file_name,num_per_class):
     f=open(FLAGS.data_dir+"/places365_"+file_name+".txt")
     X=[]
     y=[]
+    filenames=[]
     counts={}
     for line in f:
         img_name,img_class=line.strip().split(" ")
@@ -142,11 +155,12 @@ def initialize_data(file_name,num_per_class):
         if counts[img_class]>num_per_class:
             continue
 
-        counts[img_class]+=1            
+        counts[img_class]+=1
         img=misc.imresize(misc.imread(FLAGS.data_dir+"/"+file_name+"_256/"+img_name,mode="RGB"),(FLAGS.input_height,FLAGS.input_width))
         X.append(img)
         y.append(int(img_class))
-    return np.array(X),np.array(y)
+        filenames.append(img_name)
+    return np.array(X),np.array(y),np.array(filenames)
 
 def preprocess_data(X_train,X_val):
     mean_image = np.mean(X_train, axis = 0)
@@ -154,7 +168,16 @@ def preprocess_data(X_train,X_val):
     X_val -= mean_image
     return X_train,X_val
 
-
+def answer5(model,session,examples,filenames,outfile):
+    examples[0]=examples[0][:100,:,:]
+    examples[1]=examples[1][:100]
+    preds=model.answer_top_5(session,examples)
+    f=open(outfile,'w+')
+    for name,pred in zip(list(filenames),list(preds)):
+        pred=list(pred)
+        f.write(name+" "+" ".join(map(str,pred))+"\n")
+    f.close()
+    
 def evaluate(model,sess,examples):
     #model is an instance of placesModel
     #sess is the tensorflow session
@@ -184,6 +207,12 @@ def evaluate(model,sess,examples):
 def main(_):
 
     # Do what you need to load datasets from FLAGS.data_dir
+    try:
+        arrs=np.load(FLAGS.data_dir+"/test.npz")
+        X_test,y_test,names_test=arrs['X_test'],arrs['y_test'],arrs['names_test']
+    except:
+        X_test,y_test,names_test=initialize_data("test",0)
+        np.savez(FLAGS.data_dir+"/test",X_test=X_test,y_test=y_test,names_test=names_test)
     if FLAGS.debug:
         print ("Doing debug")
         num_in_debug=FLAGS.num_per_class
@@ -193,7 +222,7 @@ def main(_):
             print ("Loaded from .npz file")
         except:
             print ("Creating .npz file")
-            X,y=initialize_data("val",num_in_debug+1)
+            X,y,names=initialize_data("val",num_in_debug+1)
             num_classes=np.max(y)+1
             X_train=[]
             X_train=np.zeros((num_classes*num_in_debug,FLAGS.input_height,FLAGS.input_width,3))
@@ -248,9 +277,14 @@ def main(_):
 
         save_train_dir = get_normalized_train_dir(FLAGS.train_dir)
         saver = tf.train.Saver()
+<<<<<<< HEAD
         
         evaluate(model,sess,val_dataset)
 
+=======
+        #evaluate(model,sess,val_dataset)
+        answer5(model,sess,[X_test,y_test],names_test,"preds.txt")
+>>>>>>> 890296c601fa57a7e32bb4c192e43b4f7ea4a64e
 
 if __name__ == "__main__":
     tf.app.run()
