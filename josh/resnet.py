@@ -39,6 +39,7 @@ class placesModel(object):
         :param args: pass in more arguments as needed
         """
         self.flags = flags
+        self.l2_reg = self.flags.l2_reg
         self.h_size = self.flags.state_size
         self.dropout = self.flags.dropout
         self.height = self.flags.input_height
@@ -95,13 +96,15 @@ class placesModel(object):
                     counter+=1
                     if params[0]=='fc':
                         flat=layers.flatten(cur_in)
-                        W_shape=[flat.get_shape()[-1],params[2]]
-                        b_shape=[params[2]]
-                        W=tf.get_variable('FC_W'+str(counter),shape=W_shape,initializer=layers.xavier_initializer())
-                        b=tf.get_variable('FC_b'+str(counter),shape=b_shape,initializer=tf.constant_initializer(0.0))
-                        cur_in=tf.matmul(flat,W)+b
+                        cur_in = tf.layers.dense(inputs=flat,
+                            units=params[2],
+                            activation=None,
+                            kernel_initializer=layers.xavier_initializer(),
+                            kernel_regularizer=tf.contrib.layers.l2_regularizer(self.l2_reg, scope='FC_'+str(counter)),
+                            name='FC_'+str(counter))
                         if i<params[1]-1 and num_layer!=len(self.layer_params) :
                             cur_in=tf.nn.relu(cur_in)
+                            cur_in = tf.layers.dropout(cur_in,rate=self.dropout,training=self.is_train_placeholder,name='fc_do'+str(counter))
                     if params[0]=='batchnorm':
                         cur_in=tf.layers.batch_normalization(cur_in,training=self.is_train_placeholder,name="bn"+str(counter))
                     if params[0]=='relu':
@@ -126,7 +129,22 @@ class placesModel(object):
                                 if prev_res_depth<prev_depth:
                                     #Takes care of the diffences in cross-sectional areas
                                     if prev_res.get_shape()[1]!=z.get_shape()[1]:
-                                        prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')
+                                        #prev_res=4*tf.nn.pool(prev_res,window_shape=(2,2),strides=(2,2),pooling_type='AVG',padding='SAME')#Previous version
+                                        #Doing projecting
+                                        new_shape=(prev_res.get_shape().as_list()[1],z.get_shape().as_list()[1])
+                                        
+                                        W1=tf.get_variable('W_proj1_'+str(counter),shape=new_shape,initializer=layers.xavier_initializer())
+                                        W2=tf.get_variable('W_proj2_'+str(counter),shape=new_shape,initializer=layers.xavier_initializer())
+                                        batch,width,height,channels=prev_res.get_shape().as_list()
+                                        new_width,new_height=z.get_shape().as_list()[1:3]
+                                        prev_res=tf.reshape(tf.transpose(prev_res,(0,3,1,2)),(-1,width))#(a,d,b,c)=>#(a*d*b,c)
+                                        prev_res=tf.matmul(prev_res,W1)#(a*d*b,c')
+                                        prev_res=tf.reshape(prev_res,(-1,channels,width,new_height))#(a,d,b,c')
+                                        prev_res=tf.transpose(prev_res,(0,1,3,2))#(a,d,c',b)
+                                        prev_res=tf.reshape(prev_res,(-1,height))#(a*d*c',b)
+                                        prev_res=tf.matmul(prev_res,W2)#(a*d*c',b')
+                                        prev_res=tf.reshape(prev_res,(-1,channels,new_width,new_height))#(a,d,c',b')
+                                        prev_res=tf.transpose(prev_res,(0,3,2,1))#(a,b',c',d)
                                     #Takes care of when you increase the depth, zero pads out to new (presumably larger) depth
                                     prev_res=tf.pad(prev_res,paddings=([0,0],[0,0],[0,0],[(prev_depth-prev_res_depth)//2]*2),mode='CONSTANT')
                                 elif prev_res_depth!=prev_depth:
