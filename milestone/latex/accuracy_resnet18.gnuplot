@@ -5,7 +5,7 @@ unset log                              # remove any log-scaling
 unset label                            # remove any previous labels
 set xtic auto                          # set xtics automatically
 set ytic auto                          # set ytics automatically
-set title "Top-1 Accuracy vs Epoch"
+set title "Top-1 Accuracy vs Epoch 18 Layer ResNet"
 set xlabel "Epoch"
 set ylabel "Top-1 Accuracy"
 plot    "accuracy_resnet18.data" using 1:2 title 'Training' with linespoints , \

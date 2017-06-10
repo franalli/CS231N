@@ -51,7 +51,7 @@ tf.app.flags.DEFINE_string("num_per_class", 10, "How many to have per class in d
               ("avgpool",1,(3,3),None, None,None),
               ("fc",  1,1000,  None,     None,None),
               ("fc",  1,365,  None,     None,None)]"""
-
+"""
 #Should be 18 layer ResNet
 
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -74,6 +74,7 @@ layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,
 layer4.extend([["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]*2)
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
 
+"""
 #Should be the 50 layer
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
 layer1=[["conv",1,(1,1),(1,1,1,1),64,True,False],["conv",1,(3,3),(1,1,1,1),64,True,False],["conv",1,(1,1),(1,1,1,1),128,True,True]]*3
