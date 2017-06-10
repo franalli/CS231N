@@ -143,8 +143,8 @@ def preprocess_data(X_train,X_val):
     X_val -= mean_image
     return X_train,X_val
 
-def accuracy5(model,session,examples,filenames,true_labels):
-    preds=model.answer_top_5(session,examples)
+def accuracy_top(model,session,examples,filenames,true_labels,num=5):
+    preds=model.answer_top(session,examples,num=num)
     right=0
     wrong=0
     for i in range(true_labels.shape[0]):
@@ -154,13 +154,14 @@ def accuracy5(model,session,examples,filenames,true_labels):
             wrong+=1
     return right/float(right+wrong)
 
-def answer5(model,session,examples,filenames,outfile):
-    preds=model.answer_top_5(session,examples)
+def answer_top(model,session,examples,filenames,outfile,num=5):
+    preds=model.answer_top(session,examples,num=num)
     f=open(outfile,'w+')
     for name,pred in zip(list(filenames),list(preds)):
         pred=list(pred)
         f.write(name+" "+" ".join(map(str,pred))+"\n")
     f.close()
+
     
 def evaluate(model,sess,examples):
     #model is an instance of placesModel

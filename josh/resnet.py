@@ -213,7 +213,7 @@ class placesModel(object):
         predictions = np.argmax(scores, axis=-1)
         return predictions
 
-    def answer_top_5(self, session, data):
+    def answer_top(self, session, data,num=5):
 
         scores = []
         prog_train = Progbar(target=1 + int(len(data[0]) / self.flags.batch_size))
@@ -223,7 +223,7 @@ class placesModel(object):
             prog_train.update(i + 1, [("Predicting Images....",0.0)])
         print("")
         scores=np.vstack(scores)
-        predictions=np.argsort(-1*scores,axis=-1)[:,:5]
+        predictions=np.argsort(-1*scores,axis=-1)[:,:num]
         return predictions
 
     def validate(self, session, image_batch, label_batch):
