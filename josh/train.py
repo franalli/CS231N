@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 tf.app.flags.DEFINE_float("learning_rate", 0.0001, "Learning rate.")
 tf.app.flags.DEFINE_float("max_gradient_norm", 5.0, "Clip gradients to this norm.")
 tf.app.flags.DEFINE_float("dropout", 0.5, "Fraction of units randomly dropped on non-recurrent connections.")
+tf.app.flags.DEFINE_float("l2_reg", 1e4, "Regularization strength on fully connected layers")
 tf.app.flags.DEFINE_integer("input_width", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("input_height", 64, "Batch size to use during training.")
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size to use during training.")
@@ -34,8 +35,9 @@ tf.app.flags.DEFINE_integer("grad_clip", 1, "whether to clip gradients or not")
 tf.app.flags.DEFINE_string("optimizer", "adam", "adam / sgd")
 tf.app.flags.DEFINE_integer("print_every", 1, "How many iterations to do per print.")
 tf.app.flags.DEFINE_integer("keep", 0, "How many checkpoints to keep, 0 indicates keep all.")
-tf.app.flags.DEFINE_integer("debug",1,"Whether or not to use debug dataset of 10 images per class from val")
+tf.app.flags.DEFINE_integer("debug",0,"Whether or not to use debug dataset of 10 images per class from val")
 tf.app.flags.DEFINE_string("run_name", "18-resnet", "Name to save the .ckpt file")
+<<<<<<< HEAD
 tf.app.flags.DEFINE_string("num_per_class", 10, "How many to have per class in debug")
 """layer_params=[("batchnorm",1,None,None,None),
               ("conv",1,(7,7),(1,2,2,1),64,  True),
@@ -52,6 +54,9 @@ tf.app.flags.DEFINE_string("num_per_class", 10, "How many to have per class in d
               ("fc",  1,1000,  None,     None,None),
               ("fc",  1,365,  None,     None,None)]"""
 """
+=======
+tf.app.flags.DEFINE_string("num_per_class", 0, "How many to have per class in debug")
+>>>>>>> 77b628431e37cd08256bf13c5a01dd27cafd5ff2
 #Should be 18 layer ResNet
 
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -61,6 +66,7 @@ layer2=[["conv",1,(3,3),(1,2,2,1),128,True,False],["conv",1,(3,3),(1,1,1,1),128,
 layer3=[["conv",1,(3,3),(1,2,2,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True],["conv",1,(3,3),(1,1,1,1),256,True,False],["conv",1,(3,3),(1,1,1,1),256,True,True]]
 layer4=[["conv",1,(3,3),(1,2,2,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True],["conv",1,(3,3),(1,1,1,1),512,True,False],["conv",1,(3,3),(1,1,1,1),512,True,True]]
 layer5=[("fc",  1,1000,  None,     None,None,False),("fc",  1,365,  None,     None,None,False)]
+
 """
 #Should be the 34 layer....
 layer0=[("batchnorm",1,None,None,True), ("conv",1,(7,7),(1,2,2,1),64,  True,False), ("maxpool",1,(3,3), 2,None,None,True,True)]
@@ -150,7 +156,8 @@ def initialize_data(file_name,num_per_class):
     return np.array(X),np.array(y)
 
 def preprocess_data(X_train,X_val):
-    mean_image = np.mean(X_train, axis = 0)
+    mean_image = np.mean(X_train, axis = 0,dtype=X_train.dtype)
+    print (X_train.dtype,X_val.dtype,mean_image.dtype)
     X_train -= mean_image
     X_val -= mean_image
     return X_train,X_val
