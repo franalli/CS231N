@@ -27,5 +27,5 @@ plt.yticks(np.linspace(0, 1.0, num=21, endpoint=True, retstep=False, dtype=None)
 
 plt.legend([baseline,resnet18,resnet18_proj,resnet34,resnet50],['Baseline','ResNet 18','ResNet 18 Proj','ResNet 34','ResNet 50'],prop={'size':25})
 plt.title("Accuracy Comparison for top-n accuracy when varying n",size=25)
-plt.show()
+#plt.show()
 plt.savefig('top-n.png')
